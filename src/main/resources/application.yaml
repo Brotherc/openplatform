@@ -1,0 +1,16 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: open-platform
+  r2dbc:
+    password: Rdis2fun
+    username: root
+    url: r2dbc:mysql://localhost:3306/open_platform?characterEncoding=utf8&serverZoneId=Asia/Shanghai&rewriteBatchedStatements=true
+  jackson:
+    serialization:
+      write-dates-as-timestamps: true
+
+logging:
+  config: classpath:log/logback-app.xml

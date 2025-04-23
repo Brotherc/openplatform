@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <property name="PATH" value="app_log/log"/>
+    <property name="CONSOLE_LOG_PATTERN"
+              value="%green(%date{yyyy-MM-dd HH:mm:ss.SSS}) %highlight(%-5level) %yellow([%thread]) %cyan(%logger) - %(%msg%n)"/>
+    <property name="FILE_LOG_PATTERN"
+              value="%date{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger - %msg%n"/>
+
+    <!-- 输出到控制台 -->
+    <appender name="consoleAppender" class="ch.qos.logback.core.ConsoleAppender">
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <pattern>${CONSOLE_LOG_PATTERN}</pattern>
+        </layout>
+    </appender>
+
+    <!-- 输出到文件 -->
+    <appender name="fileAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <encoder>
+            <pattern>
+                ${FILE_LOG_PATTERN}
+            </pattern>
+        </encoder>
+        <!--混动策略-->
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!--路径-->
+            <fileNamePattern>${PATH}/app.%d.%i.log</fileNamePattern>
+            <maxHistory>15</maxHistory>
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <maxFileSize>10MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+        </rollingPolicy>
+    </appender>
+
+    <!-- 输出到文件，仅错误级别 -->
+    <appender name="fileErrorAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>ERROR</level>
+        </filter>
+        <encoder>
+            <pattern>
+                ${FILE_LOG_PATTERN}
+            </pattern>
+        </encoder>
+        <!--混动策略-->
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!--路径-->
+            <fileNamePattern>${PATH}/app.error.%d.%i.log</fileNamePattern>
+            <maxHistory>15</maxHistory>
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <maxFileSize>10MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+        </rollingPolicy>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="consoleAppender"/>
+        <appender-ref ref="fileAppender"/>
+        <appender-ref ref="fileErrorAppender"/>
+    </root>
+
+</configuration>
