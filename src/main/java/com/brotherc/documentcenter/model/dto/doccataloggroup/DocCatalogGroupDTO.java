@@ -21,7 +21,7 @@ public class DocCatalogGroupDTO {
     @Schema(description = "分组名称")
     private String name;
 
-    @Schema(description = "描述")
+    @Schema(description = "分组描述")
     private String description;
 
     @Schema(description = "状态，1：未发布，2：已发布")

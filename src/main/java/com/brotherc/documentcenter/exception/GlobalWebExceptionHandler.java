@@ -86,7 +86,7 @@ public class GlobalWebExceptionHandler implements ErrorWebExceptionHandler {
 
         StringBuilder errorMsg = new StringBuilder();
         for (FieldError error : e.getFieldErrors()) {
-            errorMsg.append(error.getField()).append(":").append(error.getDefaultMessage()).append(";");
+            errorMsg.append(error.getDefaultMessage()).append(";");
         }
         String msg = errorMsg.substring(0, errorMsg.length() - 1);
 

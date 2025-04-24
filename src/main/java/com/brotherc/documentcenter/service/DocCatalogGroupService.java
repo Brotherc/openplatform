@@ -1,6 +1,9 @@
 package com.brotherc.documentcenter.service;
 
 import com.brotherc.documentcenter.dao.DocCatalogGroupRepository;
+import com.brotherc.documentcenter.enums.PublishStatusEnum;
+import com.brotherc.documentcenter.exception.BusinessException;
+import com.brotherc.documentcenter.exception.ExceptionEnum;
 import com.brotherc.documentcenter.model.dto.doccataloggroup.*;
 import com.brotherc.documentcenter.model.entity.DocCatalogGroup;
 import org.apache.commons.lang3.StringUtils;
@@ -65,33 +68,61 @@ public class DocCatalogGroupService {
 
     @Transactional(rollbackFor = Exception.class)
     public Mono<DocCatalogGroup> add(DocCatalogGroupAddDTO docCatalogGroupAddDTO) {
-        DocCatalogGroup docCatalogGroup = new DocCatalogGroup();
-        BeanUtils.copyProperties(docCatalogGroupAddDTO, docCatalogGroup);
-        docCatalogGroup.setStatus(1);
-        docCatalogGroup.setSort(1);
-        docCatalogGroup.setCreateBy(1L);
-        docCatalogGroup.setUpdateBy(1L);
-        docCatalogGroup.setCreateTime(LocalDateTime.now());
-        docCatalogGroup.setUpdateTime(LocalDateTime.now());
-        return docCatalogGroupRepository.save(docCatalogGroup);
+        // 校验排序值是否重复
+        return docCatalogGroupRepository.countBySort(docCatalogGroupAddDTO.getSort().intValue())
+                .flatMap(count -> {
+                    if (count > 0) {
+                        return Mono.error(new BusinessException(ExceptionEnum.SYS_SORT_REPEAT_ERROR));
+                    }
+                    DocCatalogGroup docCatalogGroup = new DocCatalogGroup();
+                    BeanUtils.copyProperties(docCatalogGroupAddDTO, docCatalogGroup);
+                    docCatalogGroup.setStatus(PublishStatusEnum.UN_PUBLISH.getCode());
+                    docCatalogGroup.setSort(docCatalogGroupAddDTO.getSort().intValue());
+                    docCatalogGroup.setCreateBy(1L);
+                    docCatalogGroup.setUpdateBy(1L);
+                    docCatalogGroup.setCreateTime(LocalDateTime.now());
+                    docCatalogGroup.setUpdateTime(LocalDateTime.now());
+                    return docCatalogGroupRepository.save(docCatalogGroup);
+                });
     }
 
     @Transactional(rollbackFor = Exception.class)
     public Mono<Long> updateById(DocCatalogGroupUpdateDTO docCatalogGroupUpdateDTO) {
-        Query query = Query.query(Criteria.where("doc_catalog_group_id").is(docCatalogGroupUpdateDTO.getDocCatalogGroupId()));
+        return docCatalogGroupRepository.countByDocCatalogGroupIdNotAndSort(
+                docCatalogGroupUpdateDTO.getDocCatalogGroupId(), docCatalogGroupUpdateDTO.getSort().intValue()
+        ).flatMap(count -> {
+            if (count > 0) {
+                return Mono.error(new BusinessException(ExceptionEnum.SYS_SORT_REPEAT_ERROR));
+            }
 
-        Update update = Update
-                .update("name", docCatalogGroupUpdateDTO.getName())
-                .set("description", docCatalogGroupUpdateDTO.getDescription())
-                .set("updateTime", LocalDateTime.now())
-                .set("updateBy", 1L);
+            Query query = Query.query(Criteria.where("doc_catalog_group_id").is(docCatalogGroupUpdateDTO.getDocCatalogGroupId()));
+            Update update = Update
+                    .update("name", docCatalogGroupUpdateDTO.getName())
+                    .set("description", docCatalogGroupUpdateDTO.getDescription())
+                    .set("sort", docCatalogGroupUpdateDTO.getSort())
+                    .set("updateTime", LocalDateTime.now())
+                    .set("updateBy", 1L);
 
-        return r2dbcEntityTemplate.update(query, update, DocCatalogGroup.class);
+            return r2dbcEntityTemplate.update(query, update, DocCatalogGroup.class);
+        });
+
     }
 
     @Transactional(rollbackFor = Exception.class)
     public Mono<Void> deleteById(DocCatalogGroupDeleteDTO docCatalogGroupDeleteDTO) {
+        // TODO 判断分组下是否有未删除数据
         return docCatalogGroupRepository.deleteById(docCatalogGroupDeleteDTO.getDocCatalogGroupId());
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public Mono<Long> updateStatus(DocCatalogGroupStatusUpdateDTO docCatalogGroupStatusUpdateDTO) {
+        Query query = Query.query(Criteria.where("doc_catalog_group_id").is(docCatalogGroupStatusUpdateDTO.getDocCatalogGroupId()));
+        Update update = Update
+                .update("status", docCatalogGroupStatusUpdateDTO.getStatus())
+                .set("updateTime", LocalDateTime.now())
+                .set("updateBy", 1L);
+
+        return r2dbcEntityTemplate.update(query, update, DocCatalogGroup.class);
     }
 
 }

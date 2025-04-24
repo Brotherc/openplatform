@@ -49,6 +49,12 @@ public class DocCatalogGroupController {
         return docCatalogGroupService.updateById(docCatalogGroupUpdateDTO).map(o -> ResponseDTO.success());
     }
 
+    @Operation(summary = "更新分组状态")
+    @PostMapping("/update/status")
+    public Mono<ResponseDTO<Void>> updateStatus(@Valid @RequestBody DocCatalogGroupStatusUpdateDTO docCatalogGroupStatusUpdateDTO) {
+        return docCatalogGroupService.updateStatus(docCatalogGroupStatusUpdateDTO).map(o -> ResponseDTO.success());
+    }
+
     @Operation(summary = "根据分组id删除分组")
     @PostMapping("/deleteById")
     public Mono<ResponseDTO<Void>> deleteById(@Valid @RequestBody DocCatalogGroupDeleteDTO docCatalogGroupDeleteDTO) {
