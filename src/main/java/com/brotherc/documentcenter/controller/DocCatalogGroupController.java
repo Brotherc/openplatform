@@ -14,6 +14,8 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
+
 @Validated
 @Tag(name = "文档分组")
 @RequestMapping("/docCatalogGroup")
@@ -27,6 +29,12 @@ public class DocCatalogGroupController {
     @GetMapping("/getById")
     public Mono<ResponseDTO<DocCatalogGroupDTO>> getById(@Valid @ParameterObject DocCatalogGroupDetailQueryDTO docCatalogGroupDetailQueryDTO) {
         return docCatalogGroupService.getById(docCatalogGroupDetailQueryDTO).map(ResponseDTO::success);
+    }
+
+    @Operation(summary = "查询分组列表")
+    @GetMapping("/getList")
+    public Mono<ResponseDTO<List<DocCatalogGroupDTO>>> getList() {
+        return docCatalogGroupService.getList().collectList().map(ResponseDTO::success);
     }
 
     @Operation(summary = "分页查询分组")

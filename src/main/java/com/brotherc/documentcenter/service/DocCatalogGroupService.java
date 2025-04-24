@@ -16,6 +16,7 @@ import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.relational.core.query.Update;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
@@ -30,6 +31,14 @@ public class DocCatalogGroupService {
 
     public Mono<DocCatalogGroupDTO> getById(DocCatalogGroupDetailQueryDTO docCatalogGroupDetailQueryDTO) {
         return docCatalogGroupRepository.findById(docCatalogGroupDetailQueryDTO.getDocCatalogGroupId()).map(o -> {
+            DocCatalogGroupDTO docCatalogGroupDTO = new DocCatalogGroupDTO();
+            BeanUtils.copyProperties(o, docCatalogGroupDTO);
+            return docCatalogGroupDTO;
+        });
+    }
+
+    public Flux<DocCatalogGroupDTO> getList() {
+        return docCatalogGroupRepository.findAll().map(o -> {
             DocCatalogGroupDTO docCatalogGroupDTO = new DocCatalogGroupDTO();
             BeanUtils.copyProperties(o, docCatalogGroupDTO);
             return docCatalogGroupDTO;
