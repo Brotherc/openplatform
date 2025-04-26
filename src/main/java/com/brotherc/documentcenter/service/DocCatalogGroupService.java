@@ -20,6 +20,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 
 @Service
 public class DocCatalogGroupService {
@@ -42,7 +43,7 @@ public class DocCatalogGroupService {
             DocCatalogGroupDTO docCatalogGroupDTO = new DocCatalogGroupDTO();
             BeanUtils.copyProperties(o, docCatalogGroupDTO);
             return docCatalogGroupDTO;
-        });
+        }).sort(Comparator.comparing(DocCatalogGroupDTO::getSort));
     }
 
     public Mono<Page<DocCatalogGroupDTO>> page(DocCatalogGroupQueryDTO docCatalogGroupQueryDTO, Pageable pageable) {

@@ -15,6 +15,9 @@ public enum ExceptionEnum {
     SYS_BATCH_REMOVE_ERROR(1000006, "批量删除失败"),
     SYS_PARAM_NULL_ERROR(1000007, "参数缺少"),
     SYS_SORT_REPEAT_ERROR(1000008, "排序值重复"),
+    SYS_DATA_UN_EXIST_ERROR(1000009, "数据不存在"),
+
+    CATALOG_EXIST_CHILDREN_ERROR(1000101, "请先删除该节点下数据"),
 
     ROLE_CODE_EXISTS(1010101, "角色code已存在"),
     ROLE_UN_EXISTS(1010102, "角色不存在"),

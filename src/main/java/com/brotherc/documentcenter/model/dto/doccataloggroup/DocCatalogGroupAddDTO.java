@@ -19,7 +19,7 @@ public class DocCatalogGroupAddDTO {
     @Size(max = 255, message = "分组描述长度不能超过255")
     private String description;
 
-    @Schema(description = "排序")
+    @Schema(description = "排序", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotNull(message = "排序不能为空")
     @Max(value = 99999, message = "排序不能大于99999")
     @Min(value = 0, message = "排序不能小于0")

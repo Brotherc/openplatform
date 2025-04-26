@@ -13,7 +13,7 @@ public class DocCatalogGroupStatusUpdateDTO {
     private Long docCatalogGroupId;
 
     @NotNull(message = "状态不能为空")
-    @Schema(description = "状态，1：未发布，2：已发布")
+    @Schema(description = "状态，1：未发布，2：已发布", requiredMode = Schema.RequiredMode.REQUIRED)
     private Integer status;
 
 }
