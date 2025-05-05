@@ -13,6 +13,8 @@ public interface DocCatalogRepository extends R2dbcRepository<DocCatalog, Long> 
 
     Mono<Long> countByDocCatalogGroupIdAndParentIdAndSort(Long docCatalogGroupId, Long parentId, Integer sort);
 
-    Mono<Long> countByParentId(Long docCatalogId);
+    Mono<Long> countByParentId(Long parentId);
+
+    Mono<Long> countByDocCatalogGroupId(Long docCatalogGroupId);
 
 }

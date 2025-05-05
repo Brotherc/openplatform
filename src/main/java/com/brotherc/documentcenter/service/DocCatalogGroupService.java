@@ -1,6 +1,9 @@
 package com.brotherc.documentcenter.service;
 
+import com.brotherc.documentcenter.constants.DefaultConstant;
+import com.brotherc.documentcenter.constants.DocCatalogGroupConstant;
 import com.brotherc.documentcenter.dao.DocCatalogGroupRepository;
+import com.brotherc.documentcenter.dao.DocCatalogRepository;
 import com.brotherc.documentcenter.enums.PublishStatusEnum;
 import com.brotherc.documentcenter.exception.BusinessException;
 import com.brotherc.documentcenter.exception.ExceptionEnum;
@@ -28,6 +31,8 @@ public class DocCatalogGroupService {
     @Autowired
     private DocCatalogGroupRepository docCatalogGroupRepository;
     @Autowired
+    private DocCatalogRepository docCatalogRepository;
+    @Autowired
     private R2dbcEntityTemplate r2dbcEntityTemplate;
 
     public Mono<DocCatalogGroupDTO> getById(DocCatalogGroupDetailQueryDTO docCatalogGroupDetailQueryDTO) {
@@ -48,13 +53,11 @@ public class DocCatalogGroupService {
 
     public Mono<Page<DocCatalogGroupDTO>> page(DocCatalogGroupQueryDTO docCatalogGroupQueryDTO, Pageable pageable) {
         Criteria criteria = Criteria.empty();
-
         if (docCatalogGroupQueryDTO.getStatus() != null) {
-            criteria = criteria.and("status").is(docCatalogGroupQueryDTO.getStatus());
+            criteria = criteria.and(DocCatalogGroupConstant.STATUS).is(docCatalogGroupQueryDTO.getStatus());
         }
-
         if (StringUtils.isNotBlank(docCatalogGroupQueryDTO.getName())) {
-            criteria = criteria.and("name").like("%" + docCatalogGroupQueryDTO.getName() + "%");
+            criteria = criteria.and(DocCatalogGroupConstant.NAME).like("%" + docCatalogGroupQueryDTO.getName() + "%");
         }
 
         Query query = Query.query(criteria)
@@ -63,7 +66,7 @@ public class DocCatalogGroupService {
                 .sort(pageable.getSort());
 
         return r2dbcEntityTemplate.select(DocCatalogGroup.class)
-                .from("doc_catalog_group")
+                .from(DocCatalogGroupConstant.DOC_CATALOG_GROUP)
                 .matching(query)
                 .all()
                 .map(o -> {
@@ -88,8 +91,8 @@ public class DocCatalogGroupService {
                     BeanUtils.copyProperties(docCatalogGroupAddDTO, docCatalogGroup);
                     docCatalogGroup.setStatus(PublishStatusEnum.UN_PUBLISH.getCode());
                     docCatalogGroup.setSort(docCatalogGroupAddDTO.getSort().intValue());
-                    docCatalogGroup.setCreateBy(1L);
-                    docCatalogGroup.setUpdateBy(1L);
+                    docCatalogGroup.setCreateBy(DefaultConstant.DEFAULT_CREATE_BY);
+                    docCatalogGroup.setUpdateBy(DefaultConstant.DEFAULT_UPDATE_BY);
                     docCatalogGroup.setCreateTime(LocalDateTime.now());
                     docCatalogGroup.setUpdateTime(LocalDateTime.now());
                     return docCatalogGroupRepository.save(docCatalogGroup);
@@ -98,6 +101,7 @@ public class DocCatalogGroupService {
 
     @Transactional(rollbackFor = Exception.class)
     public Mono<Long> updateById(DocCatalogGroupUpdateDTO docCatalogGroupUpdateDTO) {
+        // 校验排序值是否重复
         return docCatalogGroupRepository.countByDocCatalogGroupIdNotAndSort(
                 docCatalogGroupUpdateDTO.getDocCatalogGroupId(), docCatalogGroupUpdateDTO.getSort().intValue()
         ).flatMap(count -> {
@@ -105,32 +109,43 @@ public class DocCatalogGroupService {
                 return Mono.error(new BusinessException(ExceptionEnum.SYS_SORT_REPEAT_ERROR));
             }
 
-            Query query = Query.query(Criteria.where("doc_catalog_group_id").is(docCatalogGroupUpdateDTO.getDocCatalogGroupId()));
+            // 构建更新参数
+            Query query = Query.query(
+                    Criteria.where(DocCatalogGroupConstant.DOC_CATALOG_GROUP_ID).is(docCatalogGroupUpdateDTO.getDocCatalogGroupId())
+            );
             Update update = Update
-                    .update("name", docCatalogGroupUpdateDTO.getName())
-                    .set("description", docCatalogGroupUpdateDTO.getDescription())
-                    .set("sort", docCatalogGroupUpdateDTO.getSort())
-                    .set("updateTime", LocalDateTime.now())
-                    .set("updateBy", 1L);
+                    .update(DocCatalogGroupConstant.NAME, docCatalogGroupUpdateDTO.getName())
+                    .set(DocCatalogGroupConstant.DESCRIPTION, docCatalogGroupUpdateDTO.getDescription())
+                    .set(DocCatalogGroupConstant.SORT, docCatalogGroupUpdateDTO.getSort())
+                    .set(DefaultConstant.UPDATE_TIME, LocalDateTime.now())
+                    .set(DefaultConstant.UPDATE_BY, DefaultConstant.DEFAULT_UPDATE_BY);
 
+            // 根据id更新数据
             return r2dbcEntityTemplate.update(query, update, DocCatalogGroup.class);
         });
-
     }
 
     @Transactional(rollbackFor = Exception.class)
     public Mono<Void> deleteById(DocCatalogGroupDeleteDTO docCatalogGroupDeleteDTO) {
-        // TODO 判断分组下是否有未删除数据
-        return docCatalogGroupRepository.deleteById(docCatalogGroupDeleteDTO.getDocCatalogGroupId());
+        // 校验分组下是否存在数据
+        return docCatalogRepository.countByDocCatalogGroupId(docCatalogGroupDeleteDTO.getDocCatalogGroupId())
+                .flatMap(count -> {
+                    if (count > 0) {
+                        return Mono.error(new BusinessException(ExceptionEnum.CATALOG_GROUP_DELETE_ERROR));
+                    }
+                    return docCatalogGroupRepository.deleteById(docCatalogGroupDeleteDTO.getDocCatalogGroupId());
+                });
     }
 
     @Transactional(rollbackFor = Exception.class)
     public Mono<Long> updateStatus(DocCatalogGroupStatusUpdateDTO docCatalogGroupStatusUpdateDTO) {
-        Query query = Query.query(Criteria.where("doc_catalog_group_id").is(docCatalogGroupStatusUpdateDTO.getDocCatalogGroupId()));
+        Query query = Query.query(
+                Criteria.where(DocCatalogGroupConstant.DOC_CATALOG_GROUP_ID).is(docCatalogGroupStatusUpdateDTO.getDocCatalogGroupId())
+        );
         Update update = Update
-                .update("status", docCatalogGroupStatusUpdateDTO.getStatus())
-                .set("updateTime", LocalDateTime.now())
-                .set("updateBy", 1L);
+                .update(DocCatalogGroupConstant.STATUS, docCatalogGroupStatusUpdateDTO.getStatus())
+                .set(DefaultConstant.UPDATE_TIME, LocalDateTime.now())
+                .set(DefaultConstant.UPDATE_BY, DefaultConstant.DEFAULT_UPDATE_BY);
 
         return r2dbcEntityTemplate.update(query, update, DocCatalogGroup.class);
     }

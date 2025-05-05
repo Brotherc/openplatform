@@ -27,7 +27,9 @@ public class DocCatalogGroupController {
 
     @Operation(summary = "根据分组id查询分组")
     @GetMapping("/getById")
-    public Mono<ResponseDTO<DocCatalogGroupDTO>> getById(@Valid @ParameterObject DocCatalogGroupDetailQueryDTO docCatalogGroupDetailQueryDTO) {
+    public Mono<ResponseDTO<DocCatalogGroupDTO>> getById(
+            @Valid @ParameterObject DocCatalogGroupDetailQueryDTO docCatalogGroupDetailQueryDTO
+    ) {
         return docCatalogGroupService.getById(docCatalogGroupDetailQueryDTO).map(ResponseDTO::success);
     }
 

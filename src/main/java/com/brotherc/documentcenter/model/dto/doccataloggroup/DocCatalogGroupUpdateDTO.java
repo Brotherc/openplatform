@@ -19,7 +19,7 @@ public class DocCatalogGroupUpdateDTO {
     @Schema(description = "分组名称", requiredMode = Schema.RequiredMode.REQUIRED)
     private String name;
 
-    @Schema(description = "描述")
+    @Schema(description = "分组描述")
     @Size(max = 255, message = "分组描述长度不能超过255")
     private String description;
 

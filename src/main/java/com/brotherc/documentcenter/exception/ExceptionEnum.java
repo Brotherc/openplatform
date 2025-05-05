@@ -18,6 +18,7 @@ public enum ExceptionEnum {
     SYS_DATA_UN_EXIST_ERROR(1000009, "数据不存在"),
 
     CATALOG_EXIST_CHILDREN_ERROR(1000101, "请先删除该节点下数据"),
+    CATALOG_GROUP_DELETE_ERROR(1000102, "请先删除文档分组下的数据"),
 
     ROLE_CODE_EXISTS(1010101, "角色code已存在"),
     ROLE_UN_EXISTS(1010102, "角色不存在"),

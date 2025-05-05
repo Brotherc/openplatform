@@ -5,8 +5,8 @@ spring:
   application:
     name: open-platform
   r2dbc:
-    password: Rdis2fun
-    username: root
+    password: testtest
+    username: test
     url: r2dbc:mysql://localhost:3306/open_platform?characterEncoding=utf8&serverZoneId=Asia/Shanghai&rewriteBatchedStatements=true
   jackson:
     serialization:
