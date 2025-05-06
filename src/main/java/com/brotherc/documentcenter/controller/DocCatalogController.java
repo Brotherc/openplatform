@@ -41,7 +41,7 @@ public class DocCatalogController {
     @Operation(summary = "根据文档目录id更新文档目录")
     @PostMapping("/updateById")
     public Mono<ResponseDTO<Void>> updateById(@Valid @RequestBody DocCatalogUpdateDTO updateDTO) {
-        return docCatalogService.updateById(updateDTO).then(Mono.fromCallable(() -> ResponseDTO.success()));
+        return docCatalogService.updateById(updateDTO).then(Mono.fromCallable(ResponseDTO::success));
     }
 
     @Operation(summary = "更新文档目录状态")

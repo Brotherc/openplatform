@@ -1,5 +1,7 @@
 package com.brotherc.documentcenter.service;
 
+import com.brotherc.documentcenter.constants.DefaultConstant;
+import com.brotherc.documentcenter.constants.DocCatalogConstant;
 import com.brotherc.documentcenter.dao.DocCatalogRepository;
 import com.brotherc.documentcenter.enums.DocCatalogTypeEnum;
 import com.brotherc.documentcenter.enums.PublishStatusEnum;
@@ -19,11 +21,9 @@ import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.relational.core.query.Update;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.reactive.TransactionalOperator;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
@@ -60,12 +60,14 @@ public class DocCatalogService {
             return docCatalogNodeDTO;
         }).toList();
 
-        copyList.forEach(item -> {
+        // 设置子节点
+        for (DocCatalogNodeDTO item : copyList) {
             if (parentId.equals(item.getParentId())) {
                 item.setChildren(buildCatalogTree(all, item.getDocCatalogId()));
                 result.add(item);
             }
-        });
+        }
+
         return result;
     }
 
@@ -82,8 +84,8 @@ public class DocCatalogService {
                             BeanUtils.copyProperties(addDTO, docCatalog);
                             docCatalog.setStatus(PublishStatusEnum.UN_PUBLISH.getCode());
                             docCatalog.setSort(addDTO.getSort().intValue());
-                            docCatalog.setCreateBy(1L);
-                            docCatalog.setUpdateBy(1L);
+                            docCatalog.setCreateBy(DefaultConstant.DEFAULT_CREATE_BY);
+                            docCatalog.setUpdateBy(DefaultConstant.DEFAULT_UPDATE_BY);
                             docCatalog.setCreateTime(LocalDateTime.now());
                             docCatalog.setUpdateTime(LocalDateTime.now());
 
@@ -95,7 +97,7 @@ public class DocCatalogService {
                     if (DocCatalogTypeEnum.DOC.getCode() == docCatalog.getType()) {
                         return documentService.add(docCatalog, StringUtils.EMPTY)
                                 .onErrorResume(e -> {
-                                    log.error("插入ES失败（文章ID: {}），错误信息：{}", docCatalog.getDocCatalogId(), e.getMessage(), e);
+                                    log.error("插入ES失败（文章ID: {}）", docCatalog.getDocCatalogId(), e);
                                     return Mono.empty();
                                 })
                                 .thenReturn(docCatalog);
@@ -111,21 +113,23 @@ public class DocCatalogService {
                 docCatalogRepository.findById(updateDTO.getDocCatalogId())
                         .switchIfEmpty(Mono.error(new BusinessException(ExceptionEnum.SYS_DATA_UN_EXIST_ERROR)))
                         .flatMap(original -> {
+                            // 判断排序值是否发生变化
                             boolean sortChange = !Objects.equals(original.getParentId(), updateDTO.getParentId()) ||
                                     !Objects.equals(updateDTO.getSort().intValue(), original.getSort());
+                            // 如果排序值变化，校验排序值是否重复
                             Mono<Boolean> sortRepeat = sortChange ? docCatalogRepository.countByDocCatalogGroupIdAndParentIdAndSort(
-                                    original.getDocCatalogGroupId(), original.getParentId(), updateDTO.getSort().intValue()
+                                    original.getDocCatalogGroupId(), updateDTO.getParentId(), updateDTO.getSort().intValue()
                             ).map(count -> count > 0) : Mono.just(false);
 
                             return sortRepeat.flatMap(repeat -> {
-                                if (repeat) {
+                                if (Objects.equals(true, repeat)) {
                                     return Mono.error(new BusinessException(ExceptionEnum.SYS_SORT_REPEAT_ERROR));
                                 }
 
                                 original.setName(updateDTO.getName());
                                 original.setParentId(updateDTO.getParentId());
                                 original.setSort(updateDTO.getSort().intValue());
-                                original.setUpdateBy(1L);
+                                original.setUpdateBy(DefaultConstant.DEFAULT_UPDATE_BY);
                                 original.setUpdateTime(LocalDateTime.now());
 
                                 return docCatalogRepository.save(original);
@@ -139,24 +143,27 @@ public class DocCatalogService {
                                 // 如果不存在，则新增文档
                                 documentService.add(docCatalog, StringUtils.EMPTY).then(Mono.empty())
                         )
-                        .flatMap(document -> {
-                            // 如果存在，更新文档
-                            return documentService.update(updateDTO).then();
+                        .flatMap(document ->
+                                // 如果存在，更新文档
+                                documentService.updateById(updateDTO).then()
+                        )
+                        .onErrorResume(e -> {
+                            log.error("更新ES失败（文章ID: {}）", docCatalog.getDocCatalogId(), e);
+                            return Mono.empty();
                         });
             } else {
                 return Mono.empty();
             }
-        }).single();
+        }).then();
     }
-
 
     @Transactional(rollbackFor = Exception.class)
     public Mono<Long> updateStatus(DocCatalogStatusUpdateDTO statusUpdateDTO) {
-        Query query = Query.query(Criteria.where("doc_catalog_id").is(statusUpdateDTO.getDocCatalogId()));
+        Query query = Query.query(Criteria.where(DocCatalogConstant.DOC_CATALOG_ID).is(statusUpdateDTO.getDocCatalogId()));
         Update update = Update
-                .update("status", statusUpdateDTO.getStatus())
-                .set("updateTime", LocalDateTime.now())
-                .set("updateBy", 1L);
+                .update(DocCatalogConstant.STATUS, statusUpdateDTO.getStatus())
+                .set(DefaultConstant.UPDATE_TIME, LocalDateTime.now())
+                .set(DefaultConstant.UPDATE_BY, DefaultConstant.DEFAULT_UPDATE_BY);
 
         return r2dbcEntityTemplate.update(query, update, DocCatalog.class);
         // TODO 如果是文章，并且是发布则往es写发布文章，否则删除发布文章
@@ -164,11 +171,11 @@ public class DocCatalogService {
 
     @Transactional(rollbackFor = Exception.class)
     public Mono<Long> updateStatusBatch(DocCatalogStatusBatchUpdateDTO statusUpdateDTO) {
-        Query query = Query.query(Criteria.where("doc_catalog_id").in(statusUpdateDTO.getDocCatalogIdList()));
+        Query query = Query.query(Criteria.where(DocCatalogConstant.DOC_CATALOG_ID).in(statusUpdateDTO.getDocCatalogIdList()));
         Update update = Update
-                .update("status", statusUpdateDTO.getStatus())
-                .set("updateTime", LocalDateTime.now())
-                .set("updateBy", 1L);
+                .update(DocCatalogConstant.STATUS, statusUpdateDTO.getStatus())
+                .set(DefaultConstant.UPDATE_TIME, LocalDateTime.now())
+                .set(DefaultConstant.UPDATE_BY, DefaultConstant.DEFAULT_UPDATE_BY);
 
         return r2dbcEntityTemplate.update(query, update, DocCatalog.class);
         // TODO 如果是文章，并且是发布则往es写发布文章，否则删除发布文章
@@ -191,7 +198,11 @@ public class DocCatalogService {
         ).flatMap(docCatalog -> {
             if (DocCatalogTypeEnum.DOC.getCode() == docCatalog.getType()) {
                 // 删除 ES 文档
-                return documentService.deleteById(docCatalog.getDocCatalogId());
+                return documentService.deleteById(docCatalog.getDocCatalogId())
+                        .onErrorResume(e -> {
+                            log.error("删除ES失败（文章ID: {}）", docCatalog.getDocCatalogId(), e);
+                            return Mono.empty();
+                        });
             } else {
                 return Mono.empty();
             }
@@ -199,12 +210,15 @@ public class DocCatalogService {
     }
 
     public Mono<Void> deleteByIdList(DocCatalogBatchDeleteDTO batchDeleteDTO) {
-        Query query = Query.query(Criteria.where("doc_catalog_id").in(batchDeleteDTO.getDocCatalogIdList()));
+        Query query = Query.query(Criteria.where(DocCatalogConstant.DOC_CATALOG_ID).in(batchDeleteDTO.getDocCatalogIdList()));
         return transactionalOperator.execute(status ->
-                r2dbcEntityTemplate
-                        .delete(query, DocCatalog.class)
+                r2dbcEntityTemplate.delete(query, DocCatalog.class)
         ).flatMap(result ->
                 documentService.deleteByIdList(batchDeleteDTO.getDocCatalogIdList())
+                        .onErrorResume(e -> {
+                            log.error("删除ES失败（文章ID: {}）", batchDeleteDTO.getDocCatalogIdList(), e);
+                            return Mono.empty();
+                        })
         ).then();
     }
 
@@ -219,10 +233,10 @@ public class DocCatalogService {
                                         // 如果不存在，则新增文档
                                         documentService.add(docCatalog, saveDTO.getContent()).then(Mono.empty())
                                 )
-                                .flatMap(document -> {
-                                    // 如果存在，更新文档
-                                    return documentService.updateContentById(saveDTO.getDocCatalogId(), saveDTO.getContent()).then();
-                                });
+                                .flatMap(document ->
+                                        // 如果存在，更新文档
+                                        documentService.updateContentById(saveDTO.getDocCatalogId(), saveDTO.getContent()).then()
+                                );
                     } else {
                         return Mono.empty();
                     }
@@ -230,13 +244,14 @@ public class DocCatalogService {
     }
 
     public Mono<DocumentDTO> getDocumentById(DocumentQueryDTO queryDTO) {
-        return documentService.getById(queryDTO.getId()).switchIfEmpty(
-                Mono.just(new Document())
-        ).map(document -> {
-            DocumentDTO documentDTO = new DocumentDTO();
-            BeanUtils.copyProperties(document, documentDTO);
-            return documentDTO;
-        });
+        return documentService.getById(queryDTO.getId())
+                .switchIfEmpty(
+                        Mono.just(new Document())
+                ).map(document -> {
+                    DocumentDTO documentDTO = new DocumentDTO();
+                    BeanUtils.copyProperties(document, documentDTO);
+                    return documentDTO;
+                });
     }
 
 }

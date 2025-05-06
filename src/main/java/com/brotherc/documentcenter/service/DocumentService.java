@@ -1,21 +1,18 @@
 package com.brotherc.documentcenter.service;
 
+import com.brotherc.documentcenter.constants.DefaultConstant;
 import com.brotherc.documentcenter.helper.EsHelper;
 import com.brotherc.documentcenter.model.dto.doccatalog.DocCatalogUpdateDTO;
 import com.brotherc.documentcenter.model.entity.DocCatalog;
 import com.brotherc.documentcenter.model.pojo.Document;
-import org.apache.commons.lang3.StringUtils;
-import org.reactivestreams.Publisher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
-import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 public class DocumentService {
@@ -40,26 +37,26 @@ public class DocumentService {
         return esHelper.addData("document", docCatalog.getDocCatalogId().toString(), esData);
     }
 
-    public Mono<Map<String, Object>> update(DocCatalogUpdateDTO updateDTO) {
+    public Mono<Map<String, Object>> updateById(DocCatalogUpdateDTO updateDTO) {
         Map<String, Object> updateFields = new HashMap<>();
         updateFields.put("name", updateDTO.getName());
         updateFields.put("parentId", updateDTO.getParentId());
         updateFields.put("sort", updateDTO.getSort().intValue());
         updateFields.put("updateTime", System.currentTimeMillis());
-        updateFields.put("updateBy", 1);
+        updateFields.put("updateBy", DefaultConstant.DEFAULT_UPDATE_BY);
         return esHelper.updateById("document", updateDTO.getDocCatalogId().toString(), updateFields);
-    }
-
-    public Mono<Document> getById(Long docCatalogId) {
-        return esHelper.getById("document", docCatalogId.toString(), Document.class);
     }
 
     public Mono<Map<String, Object>> updateContentById(Long docCatalogId, String content) {
         Map<String, Object> updateFields = new HashMap<>();
         updateFields.put("content", content);
         updateFields.put("updateTime", System.currentTimeMillis());
-        updateFields.put("updateBy", 1);
+        updateFields.put("updateBy", DefaultConstant.DEFAULT_UPDATE_BY);
         return esHelper.updateById("document", docCatalogId.toString(), updateFields);
+    }
+
+    public Mono<Document> getById(Long docCatalogId) {
+        return esHelper.getById("document", docCatalogId.toString(), Document.class);
     }
 
     public Mono<Void> deleteById(Long docCatalogId) {
@@ -67,7 +64,7 @@ public class DocumentService {
     }
 
     public Mono<Void> deleteByIdList(List<Long> docCatalogId) {
-        return esHelper.deleteByIdList("document", docCatalogId.stream().map(Object::toString).collect(Collectors.toList()));
+        return esHelper.deleteByIdList("document", docCatalogId.stream().map(Object::toString).toList());
     }
 
 }

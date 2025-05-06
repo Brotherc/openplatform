@@ -16,7 +16,7 @@ public class DocCatalogUpdateDTO {
 
     @NotBlank(message = "标题不能为空")
     @Size(max = 50, message = "标题长度不能超过50")
-    @Schema(description = "目录名", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(description = "标题", requiredMode = Schema.RequiredMode.REQUIRED)
     private String name;
 
     @Schema(description = "父目录id")

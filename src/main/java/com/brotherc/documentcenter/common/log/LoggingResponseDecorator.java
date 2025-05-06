@@ -47,7 +47,7 @@ public class LoggingResponseDecorator extends ServerHttpResponseDecorator {
                 try {
                     gzipInputStream = new GZIPInputStream(new ByteArrayInputStream(content), content.length);
                     StringWriter writer = new StringWriter();
-                    IOUtils.copy(gzipInputStream, writer, "UTF-8");
+                    IOUtils.copy(gzipInputStream, writer, String.valueOf(StandardCharsets.UTF_8));
                     s = writer.toString();
 
                 } catch (IOException e) {
