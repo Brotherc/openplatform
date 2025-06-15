@@ -189,7 +189,7 @@ public class DocCatalogService {
                                 docCatalogRepository.countByParentId(deleteDTO.getDocCatalogId())
                                         .flatMap(count -> {
                                             if (count > 0) {
-                                                return Mono.error(new BusinessException(ExceptionEnum.CATALOG_EXIST_CHILDREN_ERROR));
+                                                return Mono.error(new BusinessException(ExceptionEnum.SYS_DATA_EXIST_CHILDREN_ERROR));
                                             }
 
                                             return docCatalogRepository.deleteById(deleteDTO.getDocCatalogId()).thenReturn(catalog);

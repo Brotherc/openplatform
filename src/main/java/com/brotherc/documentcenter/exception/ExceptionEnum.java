@@ -16,9 +16,11 @@ public enum ExceptionEnum {
     SYS_PARAM_NULL_ERROR(1000007, "参数缺少"),
     SYS_SORT_REPEAT_ERROR(1000008, "排序值重复"),
     SYS_DATA_UN_EXIST_ERROR(1000009, "数据不存在"),
+    SYS_DATA_EXIST_CHILDREN_ERROR(1000010, "请先删除该节点下数据"),
 
-    CATALOG_EXIST_CHILDREN_ERROR(1000101, "请先删除该节点下数据"),
     CATALOG_GROUP_DELETE_ERROR(1000102, "请先删除文档分组下的数据"),
+
+    API_INFO_CATEGORY_NAME_EXIST_ERROR(1000201, "名称重复"),
 
     ROLE_CODE_EXISTS(1010101, "角色code已存在"),
     ROLE_UN_EXISTS(1010102, "角色不存在"),
