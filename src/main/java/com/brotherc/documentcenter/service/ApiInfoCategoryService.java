@@ -3,11 +3,16 @@ package com.brotherc.documentcenter.service;
 import com.brotherc.documentcenter.constants.ApiInfoCategoryConstant;
 import com.brotherc.documentcenter.constants.DefaultConstant;
 import com.brotherc.documentcenter.dao.ApiInfoCategoryRepository;
+import com.brotherc.documentcenter.dao.ApiInfoPublishRepository;
+import com.brotherc.documentcenter.dao.ApiInfoRepository;
+import com.brotherc.documentcenter.enums.ApiInfoCategoryTypeEnum;
 import com.brotherc.documentcenter.enums.PublishStatusEnum;
 import com.brotherc.documentcenter.exception.BusinessException;
 import com.brotherc.documentcenter.exception.ExceptionEnum;
 import com.brotherc.documentcenter.model.dto.apiinfocategory.*;
+import com.brotherc.documentcenter.model.entity.ApiInfo;
 import com.brotherc.documentcenter.model.entity.ApiInfoCategory;
+import com.brotherc.documentcenter.model.entity.ApiInfoPublish;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
@@ -16,6 +21,7 @@ import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.relational.core.query.Update;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
@@ -29,6 +35,10 @@ public class ApiInfoCategoryService {
 
     @Autowired
     private ApiInfoCategoryRepository apiInfoCategoryRepository;
+    @Autowired
+    private ApiInfoRepository apiInfoRepository;
+    @Autowired
+    private ApiInfoPublishRepository apiInfoPublishRepository;
     @Autowired
     private R2dbcEntityTemplate r2dbcEntityTemplate;
 
@@ -63,19 +73,41 @@ public class ApiInfoCategoryService {
 
     @Transactional(rollbackFor = Exception.class)
     public Mono<ApiInfoCategory> add(ApiInfoCategoryAddDTO addDTO) {
-        return apiInfoCategoryRepository.countByParentIdAndName(addDTO.getParentId(), addDTO.getName()).flatMap(count -> {
-            if (count > 0) {
-                return Mono.error(new BusinessException(ExceptionEnum.API_INFO_CATEGORY_NAME_EXIST_ERROR));
-            }
-            ApiInfoCategory apiInfoCategory = new ApiInfoCategory();
-            BeanUtils.copyProperties(addDTO, apiInfoCategory);
-            apiInfoCategory.setStatus(PublishStatusEnum.UN_PUBLISH.getCode());
-            apiInfoCategory.setCreateBy(DefaultConstant.DEFAULT_CREATE_BY);
-            apiInfoCategory.setUpdateBy(DefaultConstant.DEFAULT_UPDATE_BY);
-            apiInfoCategory.setCreateTime(LocalDateTime.now());
-            apiInfoCategory.setUpdateTime(LocalDateTime.now());
-            return apiInfoCategoryRepository.save(apiInfoCategory);
-        });
+        return apiInfoCategoryRepository.countByParentIdAndName(addDTO.getParentId(), addDTO.getName())
+                .flatMap(count -> {
+                    if (count > 0) {
+                        return Mono.error(new BusinessException(ExceptionEnum.API_INFO_CATEGORY_NAME_EXIST_ERROR));
+                    }
+
+                    ApiInfoCategory apiInfoCategory = new ApiInfoCategory();
+                    BeanUtils.copyProperties(addDTO, apiInfoCategory);
+                    apiInfoCategory.setStatus(PublishStatusEnum.UN_PUBLISH.getCode());
+                    apiInfoCategory.setCreateBy(DefaultConstant.DEFAULT_CREATE_BY);
+                    apiInfoCategory.setUpdateBy(DefaultConstant.DEFAULT_UPDATE_BY);
+                    apiInfoCategory.setCreateTime(LocalDateTime.now());
+                    apiInfoCategory.setUpdateTime(LocalDateTime.now());
+
+                    // 保存api分类
+                    return apiInfoCategoryRepository.save(apiInfoCategory)
+                            .flatMap(savedCategory -> {
+                                // 如果类型是API
+                                if (ApiInfoCategoryTypeEnum.API.getCode() == addDTO.getType()) {
+                                    // 则保存API详细信息
+                                    ApiInfo apiInfo = new ApiInfo();
+                                    apiInfo.setCnName(savedCategory.getName());
+                                    apiInfo.setApiInfoCategoryId(savedCategory.getApiInfoCategoryId());
+                                    apiInfo.setStatus(PublishStatusEnum.UN_PUBLISH.getCode());
+                                    apiInfo.setCreateBy(DefaultConstant.DEFAULT_CREATE_BY);
+                                    apiInfo.setUpdateBy(DefaultConstant.DEFAULT_UPDATE_BY);
+                                    apiInfo.setCreateTime(LocalDateTime.now());
+                                    apiInfo.setUpdateTime(LocalDateTime.now());
+
+                                    return apiInfoRepository.save(apiInfo).thenReturn(savedCategory);
+                                } else {
+                                    return Mono.just(savedCategory);
+                                }
+                            });
+                });
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -85,6 +117,7 @@ public class ApiInfoCategoryService {
                 .flatMap(original -> {
                     boolean nameChange = !Objects.equals(original.getParentId(), updateDTO.getParentId()) ||
                             !Objects.equals(updateDTO.getName(), original.getName());
+
                     Mono<Boolean> nameRepeat = nameChange ? apiInfoCategoryRepository.countByParentIdAndName(
                             updateDTO.getParentId(), updateDTO.getName()
                     ).map(count -> count > 0) : Mono.just(false);
@@ -99,55 +132,206 @@ public class ApiInfoCategoryService {
                         original.setUpdateBy(DefaultConstant.DEFAULT_UPDATE_BY);
                         original.setUpdateTime(LocalDateTime.now());
 
-                        return apiInfoCategoryRepository.save(original);
+                        return apiInfoCategoryRepository.save(original)
+                                .flatMap(savedCategory -> {
+                                    // 如果类型是API
+                                    if (ApiInfoCategoryTypeEnum.API.getCode() == original.getType()) {
+                                        // 则更新API详细信息
+                                        return apiInfoRepository.findByApiInfoCategoryId(original.getApiInfoCategoryId())
+                                                .flatMap(apiInfo -> {
+                                                    apiInfo.setCnName(original.getName());
+                                                    apiInfo.setUpdateBy(DefaultConstant.DEFAULT_UPDATE_BY);
+                                                    apiInfo.setUpdateTime(LocalDateTime.now());
+
+                                                    return apiInfoRepository.save(apiInfo)
+                                                            .flatMap(savedApiInfo -> {
+                                                                // 如果存在api发布信息，则更新
+                                                                return apiInfoPublishRepository.findByApiInfoId(savedApiInfo.getApiInfoId())
+                                                                        .flatMap(publish -> {
+                                                                            publish.setCnName(original.getName());
+                                                                            publish.setUpdateBy(DefaultConstant.DEFAULT_UPDATE_BY);
+                                                                            publish.setUpdateTime(LocalDateTime.now());
+                                                                            return apiInfoPublishRepository.save(publish);
+                                                                        })
+                                                                        .thenReturn(savedCategory)
+                                                                        .onErrorResume(e -> Mono.just(savedCategory));
+                                                            });
+                                                });
+                                    } else {
+                                        return Mono.just(savedCategory);
+                                    }
+                                });
                     });
                 });
     }
 
     @Transactional(rollbackFor = Exception.class)
     public Mono<Void> deleteById(ApiInfoCategoryDeleteDTO deleteDTO) {
-        return apiInfoCategoryRepository.findById(deleteDTO.getApiInfoCategoryId())
+        Long categoryId = deleteDTO.getApiInfoCategoryId();
+
+        return apiInfoCategoryRepository.findById(categoryId)
                 .switchIfEmpty(Mono.error(new BusinessException(ExceptionEnum.SYS_DATA_UN_EXIST_ERROR)))
                 .flatMap(apiInfoCategory ->
-                        apiInfoCategoryRepository.countByParentId(deleteDTO.getApiInfoCategoryId())
+                        apiInfoCategoryRepository.countByParentId(categoryId)
                                 .flatMap(count -> {
                                     if (count > 0) {
                                         return Mono.error(new BusinessException(ExceptionEnum.SYS_DATA_EXIST_CHILDREN_ERROR));
                                     }
 
-                                    return apiInfoCategoryRepository.deleteById(deleteDTO.getApiInfoCategoryId());
+                                    Mono<Void> deleteApiInfoChain = Mono.empty();
+
+                                    // 如果类型是API
+                                    if (ApiInfoCategoryTypeEnum.API.getCode() == apiInfoCategory.getType()) {
+                                        // 则删除API详细信息和发布信息
+                                        deleteApiInfoChain = apiInfoRepository.findByApiInfoCategoryId(categoryId)
+                                                .flatMap(apiInfo ->
+                                                        Mono.when(
+                                                                apiInfoRepository.deleteById(apiInfo.getApiInfoId()),
+                                                                apiInfoPublishRepository.deleteByApiInfoId(apiInfo.getApiInfoId())
+                                                        )
+                                                )
+                                                .then();
+                                    }
+
+                                    return deleteApiInfoChain.then(apiInfoCategoryRepository.deleteById(categoryId));
                                 })
                 );
     }
 
     @Transactional(rollbackFor = Exception.class)
     public Mono<Void> deleteByIdList(ApiInfoCategoryBatchDeleteDTO batchDeleteDTO) {
-        Query query = Query.query(Criteria.where(ApiInfoCategoryConstant.API_INFO_CATEGORY_ID).in(batchDeleteDTO.getApiInfoCategoryIdList()));
-        return r2dbcEntityTemplate
-                .delete(query, ApiInfoCategory.class)
-                .then();
+        List<Long> idList = batchDeleteDTO.getApiInfoCategoryIdList();
+        Query query = Query.query(Criteria.where(ApiInfoCategoryConstant.API_INFO_CATEGORY_ID).in(idList));
+
+        return Mono.when(
+                r2dbcEntityTemplate.delete(query, ApiInfoCategory.class),
+                r2dbcEntityTemplate.delete(query, ApiInfo.class),
+                r2dbcEntityTemplate.delete(query, ApiInfoPublish.class)
+        ).then();
     }
 
     @Transactional(rollbackFor = Exception.class)
     public Mono<Long> updateStatus(ApiInfoCategoryStatusUpdateDTO statusUpdateDTO) {
-        Query query = Query.query(Criteria.where(ApiInfoCategoryConstant.API_INFO_CATEGORY_ID).is(statusUpdateDTO.getApiInfoCategoryId()));
+        Long categoryId = statusUpdateDTO.getApiInfoCategoryId();
+        Integer newStatus = statusUpdateDTO.getStatus();
+
+        // 更新api分类状态
+        Query query = Query.query(Criteria.where(ApiInfoCategoryConstant.API_INFO_CATEGORY_ID).is(categoryId));
         Update update = Update
-                .update(ApiInfoCategoryConstant.STATUS, statusUpdateDTO.getStatus())
+                .update(ApiInfoCategoryConstant.STATUS, newStatus)
                 .set(DefaultConstant.UPDATE_TIME, LocalDateTime.now())
                 .set(DefaultConstant.UPDATE_BY, DefaultConstant.DEFAULT_UPDATE_BY);
 
-        return r2dbcEntityTemplate.update(query, update, ApiInfoCategory.class);
+        Mono<Long> updateCategory = r2dbcEntityTemplate.update(query, update, ApiInfoCategory.class);
+
+        return updateCategory.flatMap(count ->
+                apiInfoCategoryRepository.findById(categoryId)
+                        .flatMap(category -> {
+                            // 如果是api分类，不做后续操作
+                            if (ApiInfoCategoryTypeEnum.CATEGORY.getCode() == category.getType()) {
+                                return Mono.just(count);
+                            }
+
+                            return apiInfoRepository.findByApiInfoCategoryId(categoryId)
+                                    .flatMap(apiInfo -> {
+                                        // 更新api信息状态
+                                        apiInfo.setStatus(newStatus);
+                                        apiInfo.setUpdateTime(LocalDateTime.now());
+                                        apiInfo.setUpdateBy(DefaultConstant.DEFAULT_UPDATE_BY);
+
+                                        Mono<Void> syncPublishTable;
+
+                                        if (PublishStatusEnum.PUBLISH.getCode() == newStatus) {
+                                            // 发布：先删除api发布信息，再插入新记录
+                                            ApiInfoPublish publish = new ApiInfoPublish();
+                                            BeanUtils.copyProperties(apiInfo, publish);
+
+                                            publish.setCreateBy(DefaultConstant.DEFAULT_CREATE_BY);
+                                            publish.setUpdateBy(DefaultConstant.DEFAULT_UPDATE_BY);
+                                            publish.setCreateTime(LocalDateTime.now());
+                                            publish.setUpdateTime(LocalDateTime.now());
+
+                                            syncPublishTable = apiInfoPublishRepository
+                                                    .deleteByApiInfoId(apiInfo.getApiInfoId())
+                                                    .then(apiInfoPublishRepository.save(publish))
+                                                    .then();
+                                        } else {
+                                            // 取消发布：仅删除api发布信息
+                                            syncPublishTable = apiInfoPublishRepository
+                                                    .deleteByApiInfoId(apiInfo.getApiInfoId());
+                                        }
+
+                                        return apiInfoRepository.save(apiInfo)
+                                                .then(syncPublishTable)
+                                                .thenReturn(count);
+                                    });
+                        })
+        );
     }
 
     @Transactional(rollbackFor = Exception.class)
     public Mono<Long> updateStatusBatch(ApiInfoCategoryStatusBatchUpdateDTO statusUpdateDTO) {
-        Query query = Query.query(Criteria.where(ApiInfoCategoryConstant.API_INFO_CATEGORY_ID).in(statusUpdateDTO.getApiInfoCategoryIdList()));
+        List<Long> categoryIdList = statusUpdateDTO.getApiInfoCategoryIdList();
+        Integer newStatus = statusUpdateDTO.getStatus();
+
+        // 批量更新api分类状态
+        Query query = Query.query(Criteria.where(ApiInfoCategoryConstant.API_INFO_CATEGORY_ID).in(categoryIdList));
         Update update = Update
-                .update(ApiInfoCategoryConstant.STATUS, statusUpdateDTO.getStatus())
+                .update(ApiInfoCategoryConstant.STATUS, newStatus)
                 .set(DefaultConstant.UPDATE_TIME, LocalDateTime.now())
                 .set(DefaultConstant.UPDATE_BY, DefaultConstant.DEFAULT_UPDATE_BY);
 
-        return r2dbcEntityTemplate.update(query, update, ApiInfoCategory.class);
+        return r2dbcEntityTemplate.update(query, update, ApiInfoCategory.class)
+                .flatMap(updatedCount ->
+                        // 查找所有api信息
+                        apiInfoCategoryRepository.findAllById(categoryIdList)
+                                .filter(cat -> ApiInfoCategoryTypeEnum.API.getCode() == cat.getType())
+                                .collectList()
+                                .flatMap(type2Categories -> {
+                                    if (type2Categories.isEmpty()) {
+                                        return Mono.just(updatedCount);
+                                    }
+
+                                    List<Long> type2CategoryIds = type2Categories.stream()
+                                            .map(ApiInfoCategory::getApiInfoCategoryId)
+                                            .toList();
+
+                                    return apiInfoRepository.findAllByApiInfoCategoryIdIn(type2CategoryIds)
+                                            .collectList()
+                                            .flatMap(apiInfos -> {
+                                                // 批量更新api信息的状态
+                                                for (ApiInfo apiInfo : apiInfos) {
+                                                    apiInfo.setStatus(newStatus);
+                                                    apiInfo.setUpdateTime(LocalDateTime.now());
+                                                    apiInfo.setUpdateBy(DefaultConstant.DEFAULT_UPDATE_BY);
+                                                }
+
+                                                Mono<Void> updateApiInfos = apiInfoRepository.saveAll(apiInfos).then();
+
+                                                Mono<Void> syncPublish = Flux.fromIterable(apiInfos)
+                                                        .flatMap(apiInfo -> {
+                                                            if (PublishStatusEnum.PUBLISH.getCode() == newStatus) {
+                                                                ApiInfoPublish publish = new ApiInfoPublish();
+                                                                BeanUtils.copyProperties(apiInfo, publish);
+
+                                                                publish.setCreateBy(DefaultConstant.DEFAULT_CREATE_BY);
+                                                                publish.setUpdateBy(DefaultConstant.DEFAULT_UPDATE_BY);
+                                                                publish.setCreateTime(LocalDateTime.now());
+                                                                publish.setUpdateTime(LocalDateTime.now());
+
+                                                                return apiInfoPublishRepository.deleteByApiInfoId(apiInfo.getApiInfoId())
+                                                                        .then(apiInfoPublishRepository.save(publish))
+                                                                        .then();
+                                                            } else {
+                                                                return apiInfoPublishRepository.deleteByApiInfoId(apiInfo.getApiInfoId());
+                                                            }
+                                                        })
+                                                        .then();
+
+                                                return updateApiInfos.then(syncPublish).thenReturn(updatedCount);
+                                            });
+                                })
+                );
     }
 
 }
