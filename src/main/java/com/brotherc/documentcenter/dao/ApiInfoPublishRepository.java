@@ -12,4 +12,6 @@ public interface ApiInfoPublishRepository extends R2dbcRepository<ApiInfoPublish
 
     Mono<Void> deleteByApiInfoId(Long apiInfoId);
 
+    Mono<ApiInfoPublish> findByApiInfoCategoryId(Long categoryId);
+
 }

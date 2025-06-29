@@ -9,4 +9,10 @@ public class ApiInfoCategoryConstant {
 
     public static final String STATUS = "status";
 
+    public static final String SCHEMA = "schema";
+
+    public static final String DISPLAY = "display";
+
+    public static final String CHILDREN = "children";
+
 }

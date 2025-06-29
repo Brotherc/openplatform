@@ -9,10 +9,13 @@ import com.brotherc.documentcenter.enums.ApiInfoCategoryTypeEnum;
 import com.brotherc.documentcenter.enums.PublishStatusEnum;
 import com.brotherc.documentcenter.exception.BusinessException;
 import com.brotherc.documentcenter.exception.ExceptionEnum;
+import com.brotherc.documentcenter.helper.ApiInfoHelper;
+import com.brotherc.documentcenter.model.dto.apiinfo.ApiInfoSaveDTO;
 import com.brotherc.documentcenter.model.dto.apiinfocategory.*;
 import com.brotherc.documentcenter.model.entity.ApiInfo;
 import com.brotherc.documentcenter.model.entity.ApiInfoCategory;
 import com.brotherc.documentcenter.model.entity.ApiInfoPublish;
+import jakarta.validation.Valid;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
@@ -41,6 +44,8 @@ public class ApiInfoCategoryService {
     private ApiInfoPublishRepository apiInfoPublishRepository;
     @Autowired
     private R2dbcEntityTemplate r2dbcEntityTemplate;
+    @Autowired
+    private ApiInfoHelper apiInfoHelper;
 
     public Mono<List<ApiInfoCategoryNodeDTO>> getTree() {
         return apiInfoCategoryRepository.findAll()
@@ -332,6 +337,45 @@ public class ApiInfoCategoryService {
                                             });
                                 })
                 );
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public Mono<ApiInfo> save(@Valid ApiInfoSaveDTO addDTO) {
+        Long categoryId = addDTO.getApiInfoCategoryId();
+
+        return apiInfoRepository.findByApiInfoCategoryId(categoryId)
+                .flatMap(existing -> {
+                    // 存在 -> 更新
+                    ApiInfo apiInfo = apiInfoHelper.generateApiInfo(existing, addDTO);
+                    apiInfo.setUpdateBy(DefaultConstant.DEFAULT_UPDATE_BY);
+                    apiInfo.setUpdateTime(LocalDateTime.now());
+                    return apiInfoRepository.save(existing);
+                })
+                .switchIfEmpty(
+                        // 不存在 -> 新增
+                        Mono.defer(() -> {
+                            ApiInfo apiInfo = apiInfoHelper.generateApiInfo(null, addDTO);
+                            apiInfo.setCreateBy(DefaultConstant.DEFAULT_CREATE_BY);
+                            apiInfo.setUpdateBy(DefaultConstant.DEFAULT_UPDATE_BY);
+                            apiInfo.setCreateTime(LocalDateTime.now());
+                            apiInfo.setUpdateTime(LocalDateTime.now());
+                            apiInfo.setStatus(PublishStatusEnum.UN_PUBLISH.getCode());
+                            return apiInfoRepository.save(apiInfo);
+                        })
+                )
+                .flatMap(savedApi -> {
+                    // 继续处理api发布信息
+                    return apiInfoPublishRepository.findByApiInfoCategoryId(categoryId)
+                            .flatMap(existingPub -> {
+                                // 存在 -> 更新
+                                BeanUtils.copyProperties(addDTO, existingPub);
+                                existingPub.setUpdateBy(DefaultConstant.DEFAULT_UPDATE_BY);
+                                existingPub.setUpdateTime(LocalDateTime.now());
+                                return apiInfoPublishRepository.save(existingPub);
+                            })
+                            .thenReturn(savedApi);
+                });
+
     }
 
 }
