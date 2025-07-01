@@ -10,6 +10,8 @@ import com.brotherc.documentcenter.enums.PublishStatusEnum;
 import com.brotherc.documentcenter.exception.BusinessException;
 import com.brotherc.documentcenter.exception.ExceptionEnum;
 import com.brotherc.documentcenter.helper.ApiInfoHelper;
+import com.brotherc.documentcenter.model.dto.apiinfo.ApiInfoDTO;
+import com.brotherc.documentcenter.model.dto.apiinfo.ApiInfoQueryDTO;
 import com.brotherc.documentcenter.model.dto.apiinfo.ApiInfoSaveDTO;
 import com.brotherc.documentcenter.model.dto.apiinfocategory.*;
 import com.brotherc.documentcenter.model.entity.ApiInfo;
@@ -376,6 +378,11 @@ public class ApiInfoCategoryService {
                             .thenReturn(savedApi);
                 });
 
+    }
+
+    public Mono<ApiInfoDTO> getByApiInfoCategoryId(ApiInfoQueryDTO queryDTO) {
+        return apiInfoRepository.findByApiInfoCategoryId(queryDTO.getApiInfoCategoryId())
+                .map(apiInfo -> apiInfoHelper.generateApiInfoDTO(apiInfo));
     }
 
 }
