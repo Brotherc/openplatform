@@ -8,7 +8,8 @@ import lombok.Getter;
 public enum DocCatalogTypeEnum {
 
     CATALOG(1, "目录"),
-    DOC(2, "文章");
+    DOC(2, "文章"),
+    API(3, "API");
 
     private final int code;
     private final String name;

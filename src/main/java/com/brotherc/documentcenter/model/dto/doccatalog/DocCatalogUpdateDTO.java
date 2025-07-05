@@ -28,4 +28,7 @@ public class DocCatalogUpdateDTO {
     @Min(value = 0, message = "排序不能小于0")
     private BigInteger sort;
 
+    @Schema(description = "api分类id")
+    private Long apiInfoCategoryId;
+
 }

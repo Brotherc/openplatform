@@ -1,5 +1,6 @@
 package com.brotherc.documentcenter.controller;
 
+import com.brotherc.documentcenter.model.dto.apiinfo.ApiInfoDTO;
 import com.brotherc.documentcenter.model.dto.common.ResponseDTO;
 import com.brotherc.documentcenter.model.dto.doccatalog.*;
 import com.brotherc.documentcenter.model.dto.document.DocumentDTO;
@@ -62,7 +63,7 @@ public class DocCatalogController {
         return docCatalogService.deleteById(deleteDTO).then(Mono.fromCallable(ResponseDTO::success));
     }
 
-    @Operation(summary = "根据文档目录id列表删除分组")
+    @Operation(summary = "根据文档目录id列表删除文档目录")
     @PostMapping("/deleteByIdList")
     public Mono<ResponseDTO<Void>> deleteByIdList(@Valid @RequestBody DocCatalogBatchDeleteDTO batchDeleteDTO) {
         return docCatalogService.deleteByIdList(batchDeleteDTO).then(Mono.fromCallable(ResponseDTO::success));
@@ -78,6 +79,12 @@ public class DocCatalogController {
     @GetMapping("/getDocumentById")
     public Mono<ResponseDTO<DocumentDTO>> getDocumentById(@Valid @ParameterObject DocumentQueryDTO queryDTO) {
         return docCatalogService.getDocumentById(queryDTO).map(ResponseDTO::success);
+    }
+
+    @Operation(summary = "根据文档目录id查询api信息")
+    @GetMapping("/getApiInfoById")
+    public Mono<ResponseDTO<ApiInfoDTO>> getApiInfoByDocCatalogId(@Valid @ParameterObject DocCatalogApiQueryDTO queryDTO) {
+        return docCatalogService.getApiByDocCatalogId(queryDTO).map(ResponseDTO::success);
     }
 
 }

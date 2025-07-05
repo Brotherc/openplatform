@@ -3,15 +3,19 @@ package com.brotherc.documentcenter.service;
 import com.brotherc.documentcenter.constants.DefaultConstant;
 import com.brotherc.documentcenter.constants.DocCatalogConstant;
 import com.brotherc.documentcenter.dao.DocCatalogRepository;
+import com.brotherc.documentcenter.dao.DocCatalogApiRepository;
 import com.brotherc.documentcenter.enums.DocCatalogTypeEnum;
 import com.brotherc.documentcenter.enums.PublishStatusEnum;
 import com.brotherc.documentcenter.exception.BusinessException;
 import com.brotherc.documentcenter.exception.ExceptionEnum;
+import com.brotherc.documentcenter.model.dto.apiinfo.ApiInfoDTO;
+import com.brotherc.documentcenter.model.dto.apiinfo.ApiInfoQueryDTO;
 import com.brotherc.documentcenter.model.dto.doccatalog.*;
 import com.brotherc.documentcenter.model.dto.document.DocumentDTO;
 import com.brotherc.documentcenter.model.dto.document.DocumentQueryDTO;
 import com.brotherc.documentcenter.model.dto.document.DocumentSaveDTO;
 import com.brotherc.documentcenter.model.entity.DocCatalog;
+import com.brotherc.documentcenter.model.entity.DocCatalogApi;
 import com.brotherc.documentcenter.model.pojo.Document;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -36,11 +40,15 @@ public class DocCatalogService {
     @Autowired
     private DocCatalogRepository docCatalogRepository;
     @Autowired
+    private DocCatalogApiRepository docCatalogApiRepository;
+    @Autowired
     private R2dbcEntityTemplate r2dbcEntityTemplate;
     @Autowired
     private TransactionalOperator transactionalOperator;
     @Autowired
     private DocumentService documentService;
+    @Autowired
+    private ApiInfoCategoryService apiInfoCategoryService;
 
     public Mono<List<DocCatalogNodeDTO>> getTreeByGroupId(Long docCatalogGroupId) {
         return docCatalogRepository.findByDocCatalogGroupId(docCatalogGroupId)
@@ -89,7 +97,26 @@ public class DocCatalogService {
                             docCatalog.setCreateTime(LocalDateTime.now());
                             docCatalog.setUpdateTime(LocalDateTime.now());
 
-                            return docCatalogRepository.save(docCatalog);
+                            return docCatalogRepository.save(docCatalog)
+                                    .flatMap(savedDocCatalog -> {
+                                        // 如果类型是API，保存文档目录与API的关系
+                                        if (DocCatalogTypeEnum.API.getCode() == savedDocCatalog.getType()) {
+                                            DocCatalogApi docCatalogApi = new DocCatalogApi();
+                                            docCatalogApi.setDocCatalogId(savedDocCatalog.getDocCatalogId());
+                                            docCatalogApi.setDocCatalogGroupId(savedDocCatalog.getDocCatalogGroupId());
+                                            docCatalogApi.setParentId(savedDocCatalog.getParentId());
+                                            docCatalogApi.setSort(savedDocCatalog.getSort());
+                                            docCatalogApi.setApiInfoCategoryId(addDTO.getApiInfoCategoryId());
+                                            docCatalogApi.setCreateBy(DefaultConstant.DEFAULT_CREATE_BY);
+                                            docCatalogApi.setUpdateBy(DefaultConstant.DEFAULT_UPDATE_BY);
+                                            docCatalogApi.setCreateTime(LocalDateTime.now());
+                                            docCatalogApi.setUpdateTime(LocalDateTime.now());
+
+                                            return docCatalogApiRepository.save(docCatalogApi).thenReturn(savedDocCatalog);
+                                        } else {
+                                            return Mono.just(savedDocCatalog);
+                                        }
+                                    });
                         })
                 )
                 .flatMap(docCatalog -> {
@@ -132,7 +159,41 @@ public class DocCatalogService {
                                 original.setUpdateBy(DefaultConstant.DEFAULT_UPDATE_BY);
                                 original.setUpdateTime(LocalDateTime.now());
 
-                                return docCatalogRepository.save(original);
+                                return docCatalogRepository.save(original)
+                                        .flatMap(saved -> {
+                                            // 如果类型是API
+                                            if (DocCatalogTypeEnum.API.getCode() == saved.getType()) {
+                                                // 判断 文档目录api 是否存在
+                                                return docCatalogApiRepository.findByDocCatalogId(saved.getDocCatalogId())
+                                                        .flatMap(existing -> {
+                                                            // 存在则更新
+                                                            existing.setApiInfoCategoryId(updateDTO.getApiInfoCategoryId());
+                                                            existing.setParentId(updateDTO.getParentId());
+                                                            existing.setSort(updateDTO.getSort().intValue());
+                                                            existing.setUpdateBy(DefaultConstant.DEFAULT_UPDATE_BY);
+                                                            existing.setUpdateTime(LocalDateTime.now());
+                                                            return docCatalogApiRepository.save(existing);
+                                                        })
+                                                        .switchIfEmpty(Mono.defer(() -> {
+                                                            // 不存在则创建
+                                                            DocCatalogApi newApi = new DocCatalogApi();
+                                                            newApi.setDocCatalogId(saved.getDocCatalogId());
+                                                            newApi.setDocCatalogGroupId(saved.getDocCatalogGroupId());
+                                                            newApi.setParentId(saved.getParentId());
+                                                            newApi.setSort(saved.getSort());
+                                                            newApi.setApiInfoCategoryId(updateDTO.getApiInfoCategoryId());
+                                                            newApi.setCreateBy(DefaultConstant.DEFAULT_CREATE_BY);
+                                                            newApi.setUpdateBy(DefaultConstant.DEFAULT_UPDATE_BY);
+                                                            newApi.setCreateTime(LocalDateTime.now());
+                                                            newApi.setUpdateTime(LocalDateTime.now());
+                                                            newApi.setIsDel(0);
+                                                            return docCatalogApiRepository.save(newApi);
+                                                        }))
+                                                        .thenReturn(saved);
+                                            } else {
+                                                return Mono.just(saved);
+                                            }
+                                        });
                             });
                         })
         ).flatMap(docCatalog -> {
@@ -192,7 +253,15 @@ public class DocCatalogService {
                                                 return Mono.error(new BusinessException(ExceptionEnum.SYS_DATA_EXIST_CHILDREN_ERROR));
                                             }
 
-                                            return docCatalogRepository.deleteById(deleteDTO.getDocCatalogId()).thenReturn(catalog);
+                                            Mono<Void> deleteCatalogApi = Mono.empty();
+                                            if (DocCatalogTypeEnum.API.getCode() == catalog.getType()) {
+                                                // 删除文档目录api
+                                                deleteCatalogApi = docCatalogApiRepository.deleteByDocCatalogId(catalog.getDocCatalogId());
+                                            }
+
+                                            return deleteCatalogApi
+                                                    .then(docCatalogRepository.deleteById(deleteDTO.getDocCatalogId()))
+                                                    .thenReturn(catalog);
                                         })
                         )
         ).flatMap(docCatalog -> {
@@ -210,13 +279,18 @@ public class DocCatalogService {
     }
 
     public Mono<Void> deleteByIdList(DocCatalogBatchDeleteDTO batchDeleteDTO) {
-        Query query = Query.query(Criteria.where(DocCatalogConstant.DOC_CATALOG_ID).in(batchDeleteDTO.getDocCatalogIdList()));
-        return transactionalOperator.execute(status ->
-                r2dbcEntityTemplate.delete(query, DocCatalog.class)
-        ).flatMap(result ->
-                documentService.deleteByIdList(batchDeleteDTO.getDocCatalogIdList())
+        List<Long> idList = batchDeleteDTO.getDocCatalogIdList();
+        Query query = Query.query(Criteria.where(DocCatalogConstant.DOC_CATALOG_ID).in(idList));
+
+        return transactionalOperator.execute(status -> {
+            Mono<Long> deleteCatalogMono = r2dbcEntityTemplate.delete(query, DocCatalog.class);
+            Mono<Long> deleteCatalogApiMono = r2dbcEntityTemplate.delete(query, DocCatalogApi.class);
+
+            return deleteCatalogApiMono.then(deleteCatalogMono);
+        }).flatMap(result ->
+                documentService.deleteByIdList(idList)
                         .onErrorResume(e -> {
-                            log.error("删除ES失败（文章ID: {}）", batchDeleteDTO.getDocCatalogIdList(), e);
+                            log.error("删除ES失败（文章ID: {}）", idList, e);
                             return Mono.empty();
                         })
         ).then();
@@ -251,6 +325,16 @@ public class DocCatalogService {
                     DocumentDTO documentDTO = new DocumentDTO();
                     BeanUtils.copyProperties(document, documentDTO);
                     return documentDTO;
+                });
+    }
+
+    public Mono<ApiInfoDTO> getApiByDocCatalogId(DocCatalogApiQueryDTO queryDTO) {
+        return docCatalogApiRepository.findByDocCatalogId(queryDTO.getDocCatalogId())
+                .switchIfEmpty(Mono.error(new BusinessException(ExceptionEnum.SYS_DATA_UN_EXIST_ERROR)))
+                .flatMap(docCatalogApi -> {
+                    ApiInfoQueryDTO apiInfoQueryDTO = new ApiInfoQueryDTO();
+                    apiInfoQueryDTO.setApiInfoCategoryId(docCatalogApi.getApiInfoCategoryId());
+                    return apiInfoCategoryService.getByApiInfoCategoryId(apiInfoQueryDTO);
                 });
     }
 

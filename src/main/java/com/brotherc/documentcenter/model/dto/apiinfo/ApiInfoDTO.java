@@ -1,5 +1,6 @@
 package com.brotherc.documentcenter.model.dto.apiinfo;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -58,5 +59,11 @@ public class ApiInfoDTO {
 
     @Schema(description = "状态，1：未发布，2：已发布")
     private Integer status;
+
+    @Schema(description = "入参信息json，请求头、请求体、请求参数等，用于展示")
+    private JsonNode reqParamDisplayJson;
+
+    @Schema(description = "返参信息json，用于展示")
+    private JsonNode returnInfoDisplayJson;
 
 }

@@ -375,6 +375,16 @@ public class ApiInfoCategoryService {
                                 existingPub.setUpdateTime(LocalDateTime.now());
                                 return apiInfoPublishRepository.save(existingPub);
                             })
+                            .then(
+                                    // 更新api分类
+                                    apiInfoCategoryRepository.findById(categoryId)
+                                            .flatMap(category -> {
+                                                category.setName(addDTO.getCnName());
+                                                category.setUpdateBy(DefaultConstant.DEFAULT_UPDATE_BY);
+                                                category.setUpdateTime(LocalDateTime.now());
+                                                return apiInfoCategoryRepository.save(category);
+                                            })
+                            )
                             .thenReturn(savedApi);
                 });
 

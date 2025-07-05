@@ -23,8 +23,11 @@ public class DocCatalogAddDTO {
     private Long parentId = 0L;
 
     @NotNull(message = "类型不能为空")
-    @Schema(description = "类型，1：目录，2：文章", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(description = "类型，1：目录，2：文章，3：API", requiredMode = Schema.RequiredMode.REQUIRED)
     private Integer type;
+
+    @Schema(description = "api分类id")
+    private Long apiInfoCategoryId;
 
     @Schema(description = "排序", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotNull(message = "排序不能为空")

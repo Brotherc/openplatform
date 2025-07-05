@@ -39,7 +39,7 @@ public class ApiInfoHelper {
         ArrayNode reqParam = objectMapper.createArrayNode();
         ArrayNode reqParamDisplay = objectMapper.createArrayNode();
 
-        if (apiInfoSaveDTO.getPathParam() != null) {
+        if (apiInfoSaveDTO.getPathParam() != null && !apiInfoSaveDTO.getPathParam().isEmpty()) {
             ArrayNode pathParam = apiInfoSaveDTO.getPathParam();
             for (JsonNode element : pathParam) {
                 ((ObjectNode) element).put("in", "path");
@@ -54,7 +54,7 @@ public class ApiInfoHelper {
             reqParamDisplay.addAll(displayNode);
         }
 
-        if (apiInfoSaveDTO.getQueryParam() != null) {
+        if (apiInfoSaveDTO.getQueryParam() != null && !apiInfoSaveDTO.getQueryParam().isEmpty()) {
             ArrayNode queryParam = apiInfoSaveDTO.getQueryParam();
             for (JsonNode element : queryParam) {
                 ((ObjectNode) element).put("in", "query");
@@ -69,7 +69,7 @@ public class ApiInfoHelper {
             reqParamDisplay.addAll(displayNode);
         }
 
-        if (apiInfoSaveDTO.getRequestBody() != null) {
+        if (apiInfoSaveDTO.getRequestBody() != null && !apiInfoSaveDTO.getRequestBody().isEmpty()) {
             JsonNode bodyParam = apiInfoSaveDTO.getRequestBody();
             ((ObjectNode) bodyParam).put("in", "body");
 
@@ -85,7 +85,7 @@ public class ApiInfoHelper {
         JsonNode returnInfo = objectMapper.createObjectNode();
         ArrayNode returnInfoDisplay = objectMapper.createArrayNode();
 
-        if (apiInfoSaveDTO.getResponseBody() != null) {
+        if (apiInfoSaveDTO.getResponseBody() != null && !apiInfoSaveDTO.getResponseBody().isEmpty()) {
             JsonNode responseParam = apiInfoSaveDTO.getResponseBody();
 
             JsonNode schemaNode = responseParam.deepCopy();
@@ -225,6 +225,13 @@ public class ApiInfoHelper {
                 ArrayNode responseBody = new ObjectMapper().createArrayNode();
                 responseBody.add(returnInfo);
                 apiInfoDTO.setResponseBody(responseBody);
+            }
+
+            if (StringUtils.isNotBlank(apiInfo.getReqParamDisplay())) {
+                apiInfoDTO.setReqParamDisplayJson(objectMapper.readTree(apiInfo.getReqParamDisplay()));
+            }
+            if (StringUtils.isNotBlank(apiInfo.getReturnInfoDisplay())) {
+                apiInfoDTO.setReturnInfoDisplayJson(objectMapper.readTree(apiInfo.getReturnInfoDisplay()));
             }
         } catch (JsonProcessingException e) {
             log.error("json转换异常", e);
