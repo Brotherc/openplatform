@@ -6,10 +6,10 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 @EnableTransactionManagement
 @SpringBootApplication
-public class DocumentCenterApplication {
+public class OpenPlatformApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(DocumentCenterApplication.class, args);
+        SpringApplication.run(OpenPlatformApplication.class, args);
     }
 
 }
