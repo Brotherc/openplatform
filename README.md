@@ -68,6 +68,7 @@ openplatform-frontend：以npm方式启动`npm run dev`
 
 # 👁 界面预览
 ![分组管理](https://github.com/Brotherc/openplatform/blob/main/doc/manager/doccataloggroup.png)  
+![文章管理](https://github.com/Brotherc/openplatform/blob/main/doc/manager/doc.png)
 
 <br>
 
