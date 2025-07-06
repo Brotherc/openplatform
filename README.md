@@ -1,5 +1,4 @@
-<div align="center"><a href="https://github.com/Brotherc/openplatform"><img src="https://github.com/Brotherc/openplatform/blob/main/doc/logo.jpeg"></a>
-</div>
+<h1 align="center">Open Platform</h1>
 
 <p align="center">
 <img src="https://img.shields.io/github/stars/brotherc/openplatform" alt="GitHub Stars">
@@ -10,7 +9,6 @@
 # 🎯 介绍
 `Open Platform`是企业对内对外统一开放接口能力的核心平台，提供标准化的API管理等功能。通过结构化的文档管理与灵活的接口接入机制，开放平台旨在为内部系统集成和第三方开发者接入提供便捷的能力出口。
 
----
 
 # ✨ 核心功能
 ## 门户端
@@ -26,7 +24,6 @@
 ### API中心
 - 支持API分类树、API创建
 
----
 
 # 🧱 技术栈
 
@@ -39,7 +36,6 @@
 | 构建工具  | Maven                    |
 | 前端    | Vue3                     |
 
----
 
 # 📦 快速启动
 ## ✅ 环境准备
@@ -55,9 +51,9 @@
 openplatform-backend：以springboot方式启动`com.brotherc.documentcenter.OpenPlatformApplication`  
 openplatform-frontend：以npm方式启动`npm run dev`
 
----
 
 # 👁 界面预览
+
 
 # ⚙ 后续规划
 - 开发者管理
