@@ -9,10 +9,10 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.brotherc</groupId>
-	<artifactId>document-center</artifactId>
+	<artifactId>open-platform</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>document-center</name>
-	<description>document-center</description>
+	<name>open-platform</name>
+	<description>open-platform</description>
 
 	<properties>
 		<java.version>17</java.version>
