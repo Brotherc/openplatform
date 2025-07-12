@@ -29,7 +29,7 @@
               </div>
             </template>
             <template v-else>
-              <div class="empty-tip">请选择文章或API节点</div>
+              <div class="empty-tip">请选择文章</div>
             </template>
           </template>
           <template v-else>
