@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "ant-design-vue": "^4.2.6",
+    "md-editor-v3": "^5.7.1",
     "vue": "^3.5.17",
     "vue-router": "^4.5.1"
   },

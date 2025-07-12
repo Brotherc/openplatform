@@ -1,27 +1,6 @@
 <template>
   <div>
     <a-layout>
-      <a-layout-header class="header">
-        <div class="logo-area">
-          <svg class="logo" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="20" cy="20" r="20" fill="#1677ff"/>
-            <text x="9" y="27" font-size="16" font-family="Arial, Helvetica, sans-serif" fill="#fff" font-weight="bold">OP</text>
-          </svg>
-          <span class="title">开放平台</span>
-        </div>
-        <a-menu mode="horizontal" :selected-keys="[selectedMenu]" @click="onMenuClick" class="menu">
-          <a-menu-item key="home">首页</a-menu-item>
-          <a-sub-menu key="docs">
-            <template #title>
-              文档中心
-            </template>
-            <a-menu-item key="intro">平台简介</a-menu-item>
-            <a-menu-item key="api">API文档</a-menu-item>
-          </a-sub-menu>
-          <a-menu-item key="console">控制台</a-menu-item>
-        </a-menu>
-        <a-button type="primary" class="login-btn">登录</a-button>
-      </a-layout-header>
       <div class="hero-image">
         <img src="https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=1500&q=80" alt="科技感开放平台banner" class="banner-img" />
         <div class="hero-text">
@@ -140,121 +119,47 @@
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue';
-const selectedMenu = ref('home');
-function onMenuClick({ key }: { key: string }) {
-  selectedMenu.value = key;
-}
+// 已移除 Header 引入
 </script>
 
 <style scoped>
-.header {
-  display: flex;
-  align-items: center;
-  background: #fff;
-  box-shadow: 0 2px 8px #f0f1f2;
-  padding: 0 40px;
-  height: 64px;
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  z-index: 1000;
-}
-.logo-area {
-  display: flex;
-  align-items: center;
-  margin-right: 32px;
-}
-.logo {
-  height: 36px;
-  width: 36px;
-  margin-right: 10px;
-  display: block;
-}
-.title {
-  font-size: 20px;
-  font-weight: bold;
-  color: #222;
-}
-.menu {
-  flex: 1;
-  background: transparent;
-  border-bottom: none;
-  display: flex;
-  align-items: center;
-  gap: 0;
-}
-.menu :deep(.ant-menu-item),
-.menu :deep(.ant-menu-submenu) {
-  background: transparent !important;
-  border-radius: 6px;
-  padding: 0 12px !important;
-  margin: 0 2px;
-  font-size: 16px;
-  transition: background 0.2s, color 0.2s;
-  height: 40px;
-  line-height: 40px;
-  display: flex;
-  align-items: center;
-}
-.menu :deep(.ant-menu-item-selected),
-.menu :deep(.ant-menu-item-active),
-.menu :deep(.ant-menu-submenu-active) {
-  background: transparent !important;
-  color: #1677ff !important;
-}
-.menu :deep(.ant-menu-item:hover),
-.menu :deep(.ant-menu-submenu:hover) {
-  background: transparent !important;
-  color: #1677ff !important;
-}
-.login-btn {
-  margin-left: 32px;
-}
 .hero-image {
-  width: 100vw;
-  height: 480px;
-  margin-top: 64px;
   position: relative;
-  left: 50%;
-  transform: translateX(-50%);
+  height: 500px;
   overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  margin-top: 64px;
 }
+
 .banner-img {
-  width: 100vw;
-  height: 480px;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
   display: block;
-  filter: brightness(0.8);
 }
+
 .hero-text {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   text-align: center;
-  pointer-events: none;
+  color: white;
   z-index: 2;
+  max-width: 600px;
+  padding: 0 20px;
 }
+
 .hero-title {
-  font-size: 40px;
+  font-size: 48px;
   font-weight: bold;
-  margin-bottom: 18px;
-  text-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  margin-bottom: 16px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
 }
+
 .hero-desc {
   font-size: 20px;
-  text-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  line-height: 1.6;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
 }
 .features-row {
   width: 100%;
