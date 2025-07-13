@@ -55,4 +55,10 @@ public class MenuController {
         return menuService.getTree().map(ResponseDTO::success);
     }
 
+    @Operation(summary = "查询菜单树【门户】")
+    @GetMapping("/tree/portal")
+    public Mono<ResponseDTO<List<MenuPortalDTO>>> getTreePortal() {
+        return menuService.getTreePortal().map(ResponseDTO::success);
+    }
+
 }

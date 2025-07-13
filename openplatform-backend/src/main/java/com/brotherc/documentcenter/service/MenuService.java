@@ -23,6 +23,9 @@ import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 public class MenuService {
@@ -130,7 +133,81 @@ public class MenuService {
     public Mono<List<MenuDTO>> getTree() {
         return menuRepository.findAll()
                 .collectList()
-                .map(o -> buildCatalogTree(o, 0L));
+                .map(list -> {
+                    List<MenuDTO> dtos = list.stream().map(menu -> {
+                                MenuDTO dto = new MenuDTO();
+                                BeanUtils.copyProperties(menu, dto);
+                                return dto;
+                            })
+                            .sorted(Comparator.comparing(MenuDTO::getSort, Comparator.nullsLast(Integer::compareTo)))
+                            .collect(Collectors.toCollection(ArrayList::new));
+
+                    return buildTree(
+                            dtos,
+                            0L,
+                            MenuDTO::getMenuId,
+                            MenuDTO::getParentId,
+                            MenuDTO::setChildren,
+                            Comparator.comparing(MenuDTO::getSort, Comparator.nullsLast(Integer::compareTo))
+                    );
+                });
+    }
+
+    public Mono<List<MenuPortalDTO>> getTreePortal() {
+        return menuRepository.findAll()
+                .collectList()
+                .map(list -> {
+                    List<MenuPortalDTO> dtos = list.stream().map(menu -> {
+                                MenuPortalDTO dto = new MenuPortalDTO();
+                                BeanUtils.copyProperties(menu, dto);
+                                dto.setKey(menu.getMenuId().toString());
+                                dto.setParentKey(menu.getParentId().toString());
+                                dto.setTitle(menu.getName());
+                                if (menu.getDocCatalogGroupId() != null && StringUtils.isNotBlank(menu.getPath())) {
+                                    String path = menu.getPath() + "?docCatalogGroupId=" + menu.getDocCatalogGroupId();
+                                    dto.setPath(path);
+                                }
+                                return dto;
+                            })
+                            .sorted(Comparator.comparing(MenuPortalDTO::getSort, Comparator.nullsLast(Integer::compareTo)))
+                            .collect(Collectors.toCollection(ArrayList::new));
+
+                    return buildTree(
+                            dtos,
+                            "0",
+                            MenuPortalDTO::getKey,
+                            MenuPortalDTO::getParentKey,
+                            MenuPortalDTO::setChildren,
+                            Comparator.comparing(MenuPortalDTO::getSort, Comparator.nullsLast(Integer::compareTo))
+                    );
+                });
+    }
+
+    public <T, ID> List<T> buildTree(
+            List<T> all,
+            ID rootParentId,
+            Function<T, ID> idGetter,
+            Function<T, ID> parentIdGetter,
+            BiConsumer<T, List<T>> childrenSetter,
+            Comparator<T> sorter
+    ) {
+        List<T> result = new ArrayList<>();
+
+        // 排序
+//        if (sorter != null) {
+//            all.sort(sorter);
+//        }
+
+        for (T item : all) {
+            ID parentId = parentIdGetter.apply(item);
+            if (Objects.equals(parentId, rootParentId)) {
+                List<T> children = buildTree(all, idGetter.apply(item), idGetter, parentIdGetter, childrenSetter, sorter);
+                childrenSetter.accept(item, children);
+                result.add(item);
+            }
+        }
+
+        return result;
     }
 
     private List<MenuDTO> buildCatalogTree(List<Menu> all, Long parentId) {
