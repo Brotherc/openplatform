@@ -37,6 +37,18 @@
             <span>API管理</span>
           </a-menu-item>
         </a-sub-menu>
+        <a-sub-menu key="portal-center">
+          <template #title>
+            <span>
+              <appstore-outlined />
+              <span>门户中心</span>
+            </span>
+          </template>
+          <a-menu-item key="menu-manage">
+            <menu-outlined />
+            <span>菜单管理</span>
+          </a-menu-item>
+        </a-sub-menu>
       </a-menu>
     </a-layout-sider>
     <a-layout>
@@ -71,7 +83,9 @@ import {
   MenuUnfoldOutlined,
   MenuFoldOutlined,
   ApiOutlined,
-  CodeOutlined
+  CodeOutlined,
+  AppstoreOutlined,
+  MenuOutlined
 } from '@ant-design/icons-vue'
 import type { MenuClickEventHandler } from 'ant-design-vue/es/menu/src/interface'
 
@@ -87,6 +101,8 @@ const setSelectedKeysFromRoute = () => {
     selectedKeys.value = ['article']
   } else if (path.includes('/home/group')) {
     selectedKeys.value = ['group']
+  } else if (path.includes('/home/menu-manage')) {
+    selectedKeys.value = ['menu-manage']
   }
 }
 
