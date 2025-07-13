@@ -58,4 +58,7 @@ public class MenuDTO {
     @Schema(description = "是否删除：0-否，1-是")
     private Integer isDel;
 
+    @Schema(description = "文档分组id")
+    private Long docCatalogGroupId;
+
 }

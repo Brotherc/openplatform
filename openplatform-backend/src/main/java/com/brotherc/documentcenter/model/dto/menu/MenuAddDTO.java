@@ -40,4 +40,7 @@ public class MenuAddDTO {
     @Min(value = 0, message = "排序不能小于0")
     private BigInteger sort;
 
+    @Schema(description = "文档分组id")
+    private Long docCatalogGroupId;
+
 }

@@ -57,5 +57,10 @@ public class Menu extends BaseEntity {
      */
     private Integer sort;
 
+    /**
+     * 分组id
+     */
+    private Long docCatalogGroupId;
+
 }
 

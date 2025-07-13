@@ -106,6 +106,7 @@ public class MenuService {
                         original.setPath(menuUpdateDTO.getPath());
                         original.setIcon(menuUpdateDTO.getIcon());
                         original.setSort(menuUpdateDTO.getSort().intValue());
+                        original.setDocCatalogGroupId(menuUpdateDTO.getDocCatalogGroupId());
                         original.setUpdateBy(DefaultConstant.DEFAULT_UPDATE_BY);
                         original.setUpdateTime(LocalDateTime.now());
 
