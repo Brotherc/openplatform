@@ -13,53 +13,77 @@
       @click="onMenuClick"
       class="menu"
     >
-      <a-menu-item key="home">首页</a-menu-item>
-      <a-sub-menu key="docs">
-        <template #title>
-          文档中心
-        </template>
-        <a-menu-item key="docs" style="display:none"></a-menu-item>
-        <a-menu-item key="intro">平台简介</a-menu-item>
-        <a-menu-item key="api">API文档</a-menu-item>
-      </a-sub-menu>
-      <a-menu-item key="console">控制台</a-menu-item>
+      <template v-for="item in menuList" :key="item.key">
+        <a-sub-menu v-if="item.children && item.children.length" :key="item.key">
+          <template #title>{{ item.title }}</template>
+          <a-menu-item v-for="child in item.children" :key="child.key">{{ child.title }}</a-menu-item>
+        </a-sub-menu>
+        <a-menu-item v-else :key="item.key">{{ item.title }}</a-menu-item>
+      </template>
     </a-menu>
     <a-button type="primary" class="login-btn">登录</a-button>
   </a-layout-header>
 </template>
 
 <script lang="ts" setup>
-import { computed, watchEffect } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
+import axios from 'axios';
 
 const router = useRouter();
 const route = useRoute();
+const menuList = ref<any[]>([]);
+
+const fetchMenu = async () => {
+  try {
+    const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/menu/tree/portal`);
+    menuList.value = res.data?.data || [];
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.error('菜单接口获取失败', e);
+  }
+};
+
+onMounted(fetchMenu);
+
+// 递归查找当前 path 对应的一级菜单 key
+function findSelectedKeyByPath(list: any[], path: string): string {
+  for (const item of list) {
+    if (item.path === path && item.path) return item.key;
+    if (item.children && item.children.length) {
+      for (const child of item.children) {
+        if (child.path === path && child.path) return item.key;
+      }
+    }
+  }
+  // 兜底：如果 path 是 /article，优先 docs
+  if (path.startsWith('/article')) {
+    const docs = list.find(i => i.title.includes('文档') || i.key === 'docs');
+    if (docs) return docs.key;
+  }
+  return '';
+}
 
 const selectedMenu = computed(() => {
-  if (route.path === '/' || route.path === '/home') return 'home';
-  if (route.path.startsWith('/article')) return 'docs';
-  if (route.path.startsWith('/console')) return 'console';
-  return '';
+  return findSelectedKeyByPath(menuList.value, route.path);
 });
 
-// 调试：打印 selectedMenu 和 route.path
-watchEffect(() => {
-  // eslint-disable-next-line no-console
-  console.log('route.path:', route.path, 'selectedMenu:', selectedMenu.value);
-});
+function findPathByKey(list: any[], key: string): string | null {
+  for (const item of list) {
+    if (item.key === key && item.path) return item.path;
+    if (item.children && item.children.length) {
+      for (const child of item.children) {
+        if (child.key === key && child.path) return child.path;
+      }
+    }
+  }
+  return null;
+}
 
-function onMenuClick({ key }) {
-  switch (key) {
-    case 'home':
-      router.push('/');
-      break;
-    case 'intro':
-    case 'api':
-      router.push('/article');
-      break;
-    case 'console':
-      router.push('/console');
-      break;
+function onMenuClick({ key }: { key: string }) {
+  const path = findPathByKey(menuList.value, key);
+  if (path) {
+    router.push(path);
   }
 }
 </script>
