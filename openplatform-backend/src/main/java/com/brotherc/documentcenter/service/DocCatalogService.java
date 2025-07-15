@@ -56,6 +56,12 @@ public class DocCatalogService {
                 .map(o -> buildCatalogTree(o, 0L));
     }
 
+    public Mono<List<DocCatalogNodeDTO>> getTreePortalByGroupId(Long docCatalogGroupId, Integer status) {
+        return docCatalogRepository.findByDocCatalogGroupIdAndStatus(docCatalogGroupId, status)
+                .collectList()
+                .map(o -> buildCatalogTree(o, 0L));
+    }
+
     private List<DocCatalogNodeDTO> buildCatalogTree(List<DocCatalog> all, Long parentId) {
         List<DocCatalogNodeDTO> result = new ArrayList<>();
 
@@ -320,7 +326,7 @@ public class DocCatalogService {
     public Mono<DocumentDTO> getDocumentById(DocumentQueryDTO queryDTO) {
         return documentService.getById(queryDTO.getId())
                 .switchIfEmpty(
-                        Mono.just(new Document())
+                        Mono.just(null)
                 ).map(document -> {
                     DocumentDTO documentDTO = new DocumentDTO();
                     BeanUtils.copyProperties(document, documentDTO);

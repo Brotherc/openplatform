@@ -11,6 +11,8 @@ public interface DocCatalogRepository extends R2dbcRepository<DocCatalog, Long> 
 
     Flux<DocCatalog> findByDocCatalogGroupId(Long docCatalogGroupId);
 
+    Flux<DocCatalog> findByDocCatalogGroupIdAndStatus(Long docCatalogGroupId, Integer status);
+
     Mono<Long> countByDocCatalogGroupIdAndParentIdAndSort(Long docCatalogGroupId, Long parentId, Integer sort);
 
     Mono<Long> countByParentId(Long parentId);

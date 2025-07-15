@@ -1,5 +1,6 @@
 package com.brotherc.documentcenter.controller;
 
+import com.brotherc.documentcenter.enums.PublishStatusEnum;
 import com.brotherc.documentcenter.model.dto.apiinfo.ApiInfoDTO;
 import com.brotherc.documentcenter.model.dto.common.ResponseDTO;
 import com.brotherc.documentcenter.model.dto.doccatalog.*;
@@ -31,6 +32,13 @@ public class DocCatalogController {
     @GetMapping("/getTree")
     public Mono<ResponseDTO<List<DocCatalogNodeDTO>>> getTree(@Valid @ParameterObject DocCatalogNodeQueryDTO queryDTO) {
         return docCatalogService.getTreeByGroupId(queryDTO.getDocCatalogGroupId()).map(ResponseDTO::success);
+    }
+
+    @Operation(summary = "查询文档目录树【门户】")
+    @GetMapping("/getTree/portal")
+    public Mono<ResponseDTO<List<DocCatalogNodeDTO>>> getTreePortal(@Valid @ParameterObject DocCatalogNodeQueryDTO queryDTO) {
+        return docCatalogService.getTreePortalByGroupId(queryDTO.getDocCatalogGroupId(), PublishStatusEnum.PUBLISH.getCode())
+                .map(ResponseDTO::success);
     }
 
     @Operation(summary = "创建文档目录")
@@ -78,6 +86,12 @@ public class DocCatalogController {
     @Operation(summary = "根据文章id查询文章")
     @GetMapping("/getDocumentById")
     public Mono<ResponseDTO<DocumentDTO>> getDocumentById(@Valid @ParameterObject DocumentQueryDTO queryDTO) {
+        return docCatalogService.getDocumentById(queryDTO).map(ResponseDTO::success);
+    }
+
+    @Operation(summary = "根据文章id查询文章【门户】")
+    @GetMapping("/getDocumentById/portal")
+    public Mono<ResponseDTO<DocumentDTO>> getDocumentByIdPortal(@Valid @ParameterObject DocumentQueryDTO queryDTO) {
         return docCatalogService.getDocumentById(queryDTO).map(ResponseDTO::success);
     }
 
