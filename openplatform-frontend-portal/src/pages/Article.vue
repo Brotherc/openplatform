@@ -54,39 +54,29 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, watch, onMounted, onBeforeUnmount, nextTick } from 'vue';
+import { ref, watch, onMounted, onBeforeUnmount, nextTick, computed } from 'vue';
+import { useRoute } from 'vue-router';
+import axios from 'axios';
 import TreeNode from '../components/TreeNode.vue';
 import MarkdownIt from 'markdown-it';
 
 const md = new MarkdownIt();
 
-const treeData = [
-  {
-    key: '1',
-    title: '移动端插件',
-    type: 1,
-    children: [
-      {
-        key: '1-1',
-        title: '入驻指南',
-        type: 1,
-        children: [
-          { key: '1-1-1', title: '入驻流程', type: 2, content: '# 一级\n## 二级A\n## 二级B\n### 三级B-1' },
-          { key: '1-1-2', title: '视觉交互规范', type: 2, content: '# 视觉交互规范\n这里是文章内容...' }
-        ]
-      },
-      {
-        key: '1-2',
-        title: '开发文档',
-        type: 1,
-        children: [
-          { key: '1-2-1', title: '授权说明', type: 3, apiDetail: { name: '授权说明', desc: 'API 详情...' } },
-          { key: '1-2-2', title: 'SDK使用指南', type: 2, content: '# SDK使用指南\n这里是文章内容...\n## adsadad' }
-        ]
-      }
-    ]
-  }
-];
+const route = useRoute();
+const docCatalogGroupId = computed(() => route.query.docCatalogGroupId);
+
+const treeData = ref<any[]>([]);
+
+const fetchTreeData = async () => {
+  if (!docCatalogGroupId.value) return;
+  const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/docCatalog/getTree/portal`, {
+    params: { docCatalogGroupId: docCatalogGroupId.value }
+  });
+  treeData.value = res.data?.data || [];
+};
+
+onMounted(fetchTreeData);
+watch(docCatalogGroupId, fetchTreeData);
 
 const selectedKey = ref('');
 const selectedNode = ref<any>(null);
@@ -104,7 +94,7 @@ const findNode = (nodes: any[], key: string): any => {
 
 const handleSelect = (key: string) => {
   selectedKey.value = key;
-  selectedNode.value = findNode(treeData, key);
+  selectedNode.value = findNode(treeData.value, key);
 };
 
 const articleHtml = ref('');
