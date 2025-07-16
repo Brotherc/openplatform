@@ -24,8 +24,8 @@
             </template>
             <template v-else-if="selectedNode.type === 3">
               <div class="api-detail">
-                <h2>{{ selectedNode.apiDetail.name }}</h2>
-                <p>{{ selectedNode.apiDetail.desc }}</p>
+                <h2>{{ selectedNode.apiDetail?.name || '暂无API详情' }}</h2>
+                <p>{{ selectedNode.apiDetail?.desc || '' }}</p>
               </div>
             </template>
             <template v-else>
@@ -54,7 +54,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, watch, onMounted, onBeforeUnmount, nextTick, computed } from 'vue';
+import { ref, watch, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import { useRoute } from 'vue-router';
 import axios from 'axios';
 import TreeNode from '../components/TreeNode.vue';
@@ -63,20 +63,33 @@ import MarkdownIt from 'markdown-it';
 const md = new MarkdownIt();
 
 const route = useRoute();
-const docCatalogGroupId = computed(() => route.query.docCatalogGroupId);
 
 const treeData = ref<any[]>([]);
 
 const fetchTreeData = async () => {
-  if (!docCatalogGroupId.value) return;
+  const groupId = route.query.docCatalogGroupId;
+  if (!groupId) return;
   const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/docCatalog/getTree/portal`, {
-    params: { docCatalogGroupId: docCatalogGroupId.value }
+    params: { docCatalogGroupId: groupId }
   });
   treeData.value = res.data?.data || [];
+  // 新增：自动选中第一个 type 非1 节点
+  const firstNode = findFirstNonType1Node(treeData.value);
+  if (firstNode) {
+    handleSelect(firstNode.key);
+  } else {
+    selectedKey.value = '';
+    selectedNode.value = null;
+  }
 };
 
 onMounted(fetchTreeData);
-watch(docCatalogGroupId, fetchTreeData);
+watch(
+  () => route.query.docCatalogGroupId,
+  () => {
+    fetchTreeData();
+  }
+);
 
 const selectedKey = ref('');
 const selectedNode = ref<any>(null);
@@ -101,6 +114,18 @@ const articleHtml = ref('');
 const tocList = ref<{ id: string; title: string; level: number }[]>([]);
 const activeId = ref('');
 const mainContentRef = ref<HTMLElement | null>(null);
+
+// 新增：查找第一个 type 非1 节点
+function findFirstNonType1Node(nodes: any[]): any | null {
+  for (const node of nodes) {
+    if (node.type !== 1) return node;
+    if (node.children && node.children.length) {
+      const found = findFirstNonType1Node(node.children);
+      if (found) return found;
+    }
+  }
+  return null;
+}
 
 // 新增：获取文章内容方法
 const fetchArticleContent = async (id: string) => {
