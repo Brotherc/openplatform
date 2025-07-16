@@ -86,13 +86,13 @@ public class DocCatalogController {
     @Operation(summary = "根据文章id查询文章")
     @GetMapping("/getDocumentById")
     public Mono<ResponseDTO<DocumentDTO>> getDocumentById(@Valid @ParameterObject DocumentQueryDTO queryDTO) {
-        return docCatalogService.getDocumentById(queryDTO).map(ResponseDTO::success);
+        return docCatalogService.getDocumentById(queryDTO).map(ResponseDTO::success).switchIfEmpty(Mono.just(ResponseDTO.success(null)));
     }
 
     @Operation(summary = "根据文章id查询文章【门户】")
     @GetMapping("/getDocumentById/portal")
     public Mono<ResponseDTO<DocumentDTO>> getDocumentByIdPortal(@Valid @ParameterObject DocumentQueryDTO queryDTO) {
-        return docCatalogService.getDocumentById(queryDTO).map(ResponseDTO::success);
+        return docCatalogService.getDocumentById(queryDTO).map(ResponseDTO::success).switchIfEmpty(Mono.just(ResponseDTO.success(null)));
     }
 
     @Operation(summary = "根据文档目录id查询api信息")

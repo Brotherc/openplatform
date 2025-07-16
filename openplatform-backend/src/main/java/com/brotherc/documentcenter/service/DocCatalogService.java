@@ -325,13 +325,12 @@ public class DocCatalogService {
 
     public Mono<DocumentDTO> getDocumentById(DocumentQueryDTO queryDTO) {
         return documentService.getById(queryDTO.getId())
-                .switchIfEmpty(
-                        Mono.just(null)
-                ).map(document -> {
-                    DocumentDTO documentDTO = new DocumentDTO();
-                    BeanUtils.copyProperties(document, documentDTO);
-                    return documentDTO;
-                });
+                .map(document -> {
+                    DocumentDTO dto = new DocumentDTO();
+                    BeanUtils.copyProperties(document, dto);
+                    return dto;
+                })
+                .switchIfEmpty(Mono.fromCallable(() -> null));
     }
 
     public Mono<ApiInfoDTO> getApiByDocCatalogId(DocCatalogApiQueryDTO queryDTO) {
