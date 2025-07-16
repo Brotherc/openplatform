@@ -102,6 +102,14 @@ const tocList = ref<{ id: string; title: string; level: number }[]>([]);
 const activeId = ref('');
 const mainContentRef = ref<HTMLElement | null>(null);
 
+// 新增：获取文章内容方法
+const fetchArticleContent = async (id: string) => {
+  const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/docCatalog/getDocumentById/portal`, {
+    params: { id }
+  });
+  return res.data?.data?.content || '';
+};
+
 function generateId(text: string) {
   return text.trim().toLowerCase().replace(/[^\w]+/g, '-');
 }
@@ -131,7 +139,9 @@ watch(
   () => selectedNode.value,
   async (node) => {
     if (node && node.type === 2) {
-      const { html, toc } = generateTOC(node.content);
+      // 修改：接口获取内容
+      const content = await fetchArticleContent(node.key);
+      const { html, toc } = generateTOC(content);
       articleHtml.value = html;
       tocList.value = toc;
       await nextTick();
