@@ -331,11 +331,11 @@ onBeforeUnmount(() => {
 .article-page {
   min-height: 100vh;
   background: #f5f5f5;
+  padding-top: 64px;
 }
 .content-wrapper {
   display: flex;
-  margin-top: 64px;
-  min-height: 100vh;
+  min-height: calc(100vh - 64px);
 }
 .sidebar {
   width: 280px;
@@ -346,6 +346,7 @@ onBeforeUnmount(() => {
   top: 64px;
   bottom: 0;
   z-index: 100;
+  height: calc(100vh - 64px);
 }
 .sidebar-header {
   padding: 20px;
