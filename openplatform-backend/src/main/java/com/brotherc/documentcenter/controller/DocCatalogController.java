@@ -101,4 +101,10 @@ public class DocCatalogController {
         return docCatalogService.getApiByDocCatalogId(queryDTO).map(ResponseDTO::success);
     }
 
+    @Operation(summary = "根据文档目录id查询api信息【门户】")
+    @GetMapping("/getApiInfoById/portal")
+    public Mono<ResponseDTO<ApiInfoDTO>> getApiInfoByDocCatalogIdPortal(@Valid @ParameterObject DocCatalogApiQueryDTO queryDTO) {
+        return docCatalogService.getApiByDocCatalogId(queryDTO).map(ResponseDTO::success);
+    }
+
 }

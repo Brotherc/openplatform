@@ -24,8 +24,43 @@
             </template>
             <template v-else-if="selectedNode.type === 3">
               <div class="api-detail">
-                <h2>{{ selectedNode.apiDetail?.name || '暂无API详情' }}</h2>
-                <p>{{ selectedNode.apiDetail?.desc || '' }}</p>
+                <div v-if="selectedNode.apiDetail" class="api-info">
+                  <div class="api-header">
+                    <h2>{{ selectedNode.apiDetail.name }}</h2>
+                    <span class="api-cn-name">{{ selectedNode.apiDetail.cnName }}</span>
+                  </div>
+                  <div class="api-description">
+                    <p>{{ selectedNode.apiDetail.description }}</p>
+                  </div>
+                  
+                  <div class="api-params">
+                    <h3>请求参数</h3>
+                    <a-table 
+                      v-if="selectedNode.apiDetail.queryParam && selectedNode.apiDetail.queryParam.length"
+                      :columns="requestColumns" 
+                      :data-source="selectedNode.apiDetail.queryParam" 
+                      :pagination="false"
+                      size="small"
+                      bordered
+                    />
+                    <div v-else class="no-params">无请求参数</div>
+                  </div>
+                  
+                  <div class="api-response">
+                    <h3>响应参数</h3>
+                    <a-table 
+                      v-if="selectedNode.apiDetail.returnInfoDisplayJson && selectedNode.apiDetail.returnInfoDisplayJson.length"
+                      :columns="responseColumns" 
+                      :data-source="selectedNode.apiDetail.returnInfoDisplayJson" 
+                      :pagination="false"
+                      size="small"
+                      bordered
+                      :row-key="(record) => record.name"
+                    />
+                    <div v-else class="no-response">无响应参数</div>
+                  </div>
+                </div>
+                <div v-else class="loading">加载中...</div>
               </div>
             </template>
             <template v-else>
@@ -59,12 +94,83 @@ import { useRoute } from 'vue-router';
 import axios from 'axios';
 import TreeNode from '../components/TreeNode.vue';
 import MarkdownIt from 'markdown-it';
+import { Table } from 'ant-design-vue';
 
 const md = new MarkdownIt();
 
 const route = useRoute();
 
 const treeData = ref<any[]>([]);
+
+// 请求参数表格列配置
+const requestColumns = [
+  {
+    title: '参数名',
+    dataIndex: 'name',
+    key: 'name',
+    width: 200,
+  },
+  {
+    title: '类型',
+    dataIndex: 'type',
+    key: 'type',
+    width: 120,
+  },
+  {
+    title: '是否必填',
+    dataIndex: 'required',
+    key: 'required',
+    width: 100,
+    customRender: ({ text }: { text: boolean }) => text ? '是' : '否',
+  },
+  {
+    title: '示例值',
+    dataIndex: 'example',
+    key: 'example',
+    width: 120,
+    customRender: ({ text }: { text: any }) => text || '-',
+  },
+  {
+    title: '描述',
+    dataIndex: 'description',
+    key: 'description',
+  },
+];
+
+// 响应参数表格列配置
+const responseColumns = [
+  {
+    title: '参数名',
+    dataIndex: 'name',
+    key: 'name',
+    width: 200,
+  },
+  {
+    title: '类型',
+    dataIndex: 'type',
+    key: 'type',
+    width: 120,
+  },
+  {
+    title: '是否必填',
+    dataIndex: 'required',
+    key: 'required',
+    width: 100,
+    customRender: ({ text }: { text: boolean }) => text ? '是' : '否',
+  },
+  {
+    title: '示例值',
+    dataIndex: 'example',
+    key: 'example',
+    width: 120,
+    customRender: ({ text }: { text: any }) => text || '-',
+  },
+  {
+    title: '描述',
+    dataIndex: 'description',
+    key: 'description',
+  },
+];
 
 const fetchTreeData = async () => {
   const groupId = route.query.docCatalogGroupId;
@@ -135,6 +241,14 @@ const fetchArticleContent = async (id: string) => {
   return res.data?.data?.content || '';
 };
 
+// 新增：获取API详情方法
+const fetchApiInfo = async (docCatalogId: string) => {
+  const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/docCatalog/getApiInfoById/portal`, {
+    params: { docCatalogId }
+  });
+  return res.data?.data || null;
+};
+
 function generateId(text: string) {
   return text.trim().toLowerCase().replace(/[^\w]+/g, '-');
 }
@@ -171,6 +285,10 @@ watch(
       tocList.value = toc;
       await nextTick();
       updateActiveToc();
+    } else if (node && node.type === 3) {
+      // 新增：获取API详情
+      const apiInfo = await fetchApiInfo(node.key);
+      node.apiDetail = apiInfo;
     }
   },
   { immediate: true }
@@ -286,6 +404,60 @@ onBeforeUnmount(() => {
 }
 .api-detail h2 {
   margin-top: 0;
+  margin-bottom: 20px;
+  color: #222;
+  font-size: 24px;
+}
+.api-info h2 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: #222;
+  font-size: 24px;
+}
+.api-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.api-header h2 {
+  margin: 0;
+  margin-bottom: 0;
+  font-size: 32px;
+  font-weight: 700;
+}
+.api-cn-name {
+  color: #666;
+  font-size: 16px;
+  margin-top: 4px;
+}
+.api-description {
+  margin-bottom: 24px;
+}
+.api-description p {
+  margin: 0;
+  color: #666;
+  line-height: 1.6;
+}
+.api-params, .api-response {
+  margin-bottom: 32px;
+  margin-top: 32px;
+}
+.api-params h3, .api-response h3 {
+  margin-bottom: 16px;
+  color: #222;
+  font-size: 18px;
+}
+.no-params, .no-response {
+  color: #999;
+  font-style: italic;
+  padding: 16px;
+  text-align: center;
+}
+.loading {
+  text-align: center;
+  color: #666;
+  padding: 40px;
 }
 .empty-tip {
   color: #bbb;
