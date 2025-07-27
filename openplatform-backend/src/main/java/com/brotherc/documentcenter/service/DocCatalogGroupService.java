@@ -81,22 +81,39 @@ public class DocCatalogGroupService {
 
     @Transactional(rollbackFor = Exception.class)
     public Mono<DocCatalogGroup> add(DocCatalogGroupAddDTO docCatalogGroupAddDTO) {
-        // 校验排序值是否重复
-        return docCatalogGroupRepository.countBySort(docCatalogGroupAddDTO.getSort().intValue())
-                .flatMap(count -> {
-                    if (count > 0) {
-                        return Mono.error(new BusinessException(ExceptionEnum.SYS_SORT_REPEAT_ERROR));
-                    }
-                    DocCatalogGroup docCatalogGroup = new DocCatalogGroup();
-                    BeanUtils.copyProperties(docCatalogGroupAddDTO, docCatalogGroup);
-                    docCatalogGroup.setStatus(PublishStatusEnum.UN_PUBLISH.getCode());
-                    docCatalogGroup.setSort(docCatalogGroupAddDTO.getSort().intValue());
-                    docCatalogGroup.setCreateBy(DefaultConstant.DEFAULT_CREATE_BY);
-                    docCatalogGroup.setUpdateBy(DefaultConstant.DEFAULT_UPDATE_BY);
-                    docCatalogGroup.setCreateTime(LocalDateTime.now());
-                    docCatalogGroup.setUpdateTime(LocalDateTime.now());
-                    return docCatalogGroupRepository.save(docCatalogGroup);
-                });
+        if (docCatalogGroupAddDTO.getSort() == null) {
+            // 排序值为空，自动生成最大值+1
+            return docCatalogGroupRepository.findMaxSort()
+                    .map(maxSort -> maxSort + 1)
+                    .flatMap(sort -> {
+                        DocCatalogGroup docCatalogGroup = new DocCatalogGroup();
+                        BeanUtils.copyProperties(docCatalogGroupAddDTO, docCatalogGroup);
+                        docCatalogGroup.setStatus(PublishStatusEnum.UN_PUBLISH.getCode());
+                        docCatalogGroup.setSort(sort);
+                        docCatalogGroup.setCreateBy(DefaultConstant.DEFAULT_CREATE_BY);
+                        docCatalogGroup.setUpdateBy(DefaultConstant.DEFAULT_UPDATE_BY);
+                        docCatalogGroup.setCreateTime(LocalDateTime.now());
+                        docCatalogGroup.setUpdateTime(LocalDateTime.now());
+                        return docCatalogGroupRepository.save(docCatalogGroup);
+                    });
+        } else {
+            // 排序值不为空，校验排序值是否重复
+            return docCatalogGroupRepository.countBySort(docCatalogGroupAddDTO.getSort().intValue())
+                    .flatMap(count -> {
+                        if (count > 0) {
+                            return Mono.error(new BusinessException(ExceptionEnum.SYS_SORT_REPEAT_ERROR));
+                        }
+                        DocCatalogGroup docCatalogGroup = new DocCatalogGroup();
+                        BeanUtils.copyProperties(docCatalogGroupAddDTO, docCatalogGroup);
+                        docCatalogGroup.setStatus(PublishStatusEnum.UN_PUBLISH.getCode());
+                        docCatalogGroup.setSort(docCatalogGroupAddDTO.getSort().intValue());
+                        docCatalogGroup.setCreateBy(DefaultConstant.DEFAULT_CREATE_BY);
+                        docCatalogGroup.setUpdateBy(DefaultConstant.DEFAULT_UPDATE_BY);
+                        docCatalogGroup.setCreateTime(LocalDateTime.now());
+                        docCatalogGroup.setUpdateTime(LocalDateTime.now());
+                        return docCatalogGroupRepository.save(docCatalogGroup);
+                    });
+        }
     }
 
     @Transactional(rollbackFor = Exception.class)
