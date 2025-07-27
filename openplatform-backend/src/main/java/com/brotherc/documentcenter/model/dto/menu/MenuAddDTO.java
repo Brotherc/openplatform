@@ -26,16 +26,14 @@ public class MenuAddDTO {
     @Schema(description = "状态，1：禁用，2：启用", requiredMode = Schema.RequiredMode.REQUIRED)
     private Integer status;
 
-    @NotBlank(message = "访问路径不能为空")
     @Size(max = 255, message = "访问路径长度不能超过255")
-    @Schema(description = "访问路径", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(description = "访问路径")
     private String path;
 
     @Schema(description = "图标")
     private String icon;
 
-    @Schema(description = "排序", requiredMode = Schema.RequiredMode.REQUIRED)
-    @NotNull(message = "排序不能为空")
+    @Schema(description = "排序")
     @Max(value = 99999, message = "排序不能大于99999")
     @Min(value = 0, message = "排序不能小于0")
     private BigInteger sort;

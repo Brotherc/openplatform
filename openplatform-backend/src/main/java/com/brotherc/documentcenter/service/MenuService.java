@@ -38,21 +38,38 @@ public class MenuService {
 
     @Transactional(rollbackFor = Exception.class)
     public Mono<Menu> add(MenuAddDTO menuAddDTO) {
-        // 校验排序值是否重复
-        return menuRepository.countByParentIdAndSort(menuAddDTO.getParentId(), menuAddDTO.getSort().intValue())
-                .flatMap(count -> {
-                    if (count > 0) {
-                        return Mono.error(new BusinessException(ExceptionEnum.SYS_SORT_REPEAT_ERROR));
-                    }
-                    Menu menu = new Menu();
-                    BeanUtils.copyProperties(menuAddDTO, menu);
-                    menu.setSort(menuAddDTO.getSort().intValue());
-                    menu.setCreateBy(DefaultConstant.DEFAULT_CREATE_BY);
-                    menu.setUpdateBy(DefaultConstant.DEFAULT_UPDATE_BY);
-                    menu.setCreateTime(LocalDateTime.now());
-                    menu.setUpdateTime(LocalDateTime.now());
-                    return menuRepository.save(menu);
-                });
+        // 如果排序值为空，获取父ID下的最大排序值+1；如果不为空，校验排序值是否重复
+        if (menuAddDTO.getSort() == null) {
+            // 排序值为空，自动生成父ID下的最大值+1
+            return menuRepository.findMaxSortByParentId(menuAddDTO.getParentId())
+                    .map(maxSort -> maxSort + 1)
+                    .flatMap(sort -> {
+                        Menu menu = new Menu();
+                        BeanUtils.copyProperties(menuAddDTO, menu);
+                        menu.setSort(sort);
+                        menu.setCreateBy(DefaultConstant.DEFAULT_CREATE_BY);
+                        menu.setUpdateBy(DefaultConstant.DEFAULT_UPDATE_BY);
+                        menu.setCreateTime(LocalDateTime.now());
+                        menu.setUpdateTime(LocalDateTime.now());
+                        return menuRepository.save(menu);
+                    });
+        } else {
+            // 排序值不为空，校验排序值是否重复
+            return menuRepository.countByParentIdAndSort(menuAddDTO.getParentId(), menuAddDTO.getSort().intValue())
+                    .flatMap(count -> {
+                        if (count > 0) {
+                            return Mono.error(new BusinessException(ExceptionEnum.SYS_SORT_REPEAT_ERROR));
+                        }
+                        Menu menu = new Menu();
+                        BeanUtils.copyProperties(menuAddDTO, menu);
+                        menu.setSort(menuAddDTO.getSort().intValue());
+                        menu.setCreateBy(DefaultConstant.DEFAULT_CREATE_BY);
+                        menu.setUpdateBy(DefaultConstant.DEFAULT_UPDATE_BY);
+                        menu.setCreateTime(LocalDateTime.now());
+                        menu.setUpdateTime(LocalDateTime.now());
+                        return menuRepository.save(menu);
+                    });
+        }
     }
 
     public Mono<Page<MenuDTO>> page(MenuQueryDTO menuQueryDTO, Pageable pageable) {

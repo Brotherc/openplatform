@@ -30,9 +30,8 @@ public class MenuUpdateDTO {
     @Schema(description = "状态，1：禁用，2：启用", requiredMode = Schema.RequiredMode.REQUIRED)
     private Integer status;
 
-    @NotBlank(message = "访问路径不能为空")
     @Size(max = 255, message = "访问路径长度不能超过255")
-    @Schema(description = "访问路径", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(description = "访问路径")
     private String path;
 
     @Schema(description = "图标")

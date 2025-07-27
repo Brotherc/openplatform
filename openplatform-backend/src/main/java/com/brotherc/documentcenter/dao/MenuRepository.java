@@ -1,6 +1,7 @@
 package com.brotherc.documentcenter.dao;
 
 import com.brotherc.documentcenter.model.entity.Menu;
+import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.r2dbc.repository.R2dbcRepository;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;
@@ -11,5 +12,8 @@ public interface MenuRepository extends R2dbcRepository<Menu, Long> {
     Mono<Long> countByParentIdAndSort(Long parentId, Integer sort);
 
     Mono<Long> countByParentId(Long parentId);
+
+    @Query("SELECT COALESCE(MAX(sort), 0) FROM menu WHERE parent_id = :parentId")
+    Mono<Integer> findMaxSortByParentId(Long parentId);
 
 }
