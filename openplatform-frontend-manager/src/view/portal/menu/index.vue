@@ -8,13 +8,16 @@
     </div>
 
     <a-table
-        :columns="columns"
-        :data-source="menuList"
-        :loading="loading"
-        :pagination="pagination"
-        @change="handleTableChange"
-        row-key="menuId"
-        :expandable="false"
+      :columns="columns"
+      :data-source="menuList"
+      :loading="loading"
+      :pagination="false"
+      @change="handleTableChange"
+      row-key="menuId"
+      :expandable="{
+        defaultExpandAllRows: true,
+        childrenColumnName: 'children'
+      }"
     >
       <template #bodyCell="{ column, record }">
         <template v-if="column.key === 'status'">
@@ -37,19 +40,19 @@
 
     <!-- 新增/编辑菜单弹窗 -->
     <a-modal
-        v-model:open="modalVisible"
-        :title="isEdit ? '编辑菜单' : '新增菜单'"
-        @ok="handleSubmit"
-        @cancel="handleCancel"
-        :confirm-loading="submitLoading"
-        ok-text="确定"
-        cancel-text="取消"
+      v-model:open="modalVisible"
+      :title="isEdit ? '编辑菜单' : '新增菜单'"
+      @ok="handleSubmit"
+      @cancel="handleCancel"
+      :confirm-loading="submitLoading"
+      ok-text="确定"
+      cancel-text="取消"
     >
       <a-form
-          ref="formRef"
-          :model="formData"
-          :rules="rules"
-          layout="vertical"
+        ref="formRef"
+        :model="formData"
+        :rules="rules"
+        layout="vertical"
       >
         <a-form-item label="菜单名称" name="name">
           <a-input v-model:value="formData.name" placeholder="请输入菜单名称" />
@@ -59,12 +62,12 @@
         </a-form-item>
         <a-form-item label="父级菜单" name="parentId">
           <a-tree-select
-              v-model:value="formData.parentId"
-              :tree-data="getFilteredParentOptions()"
-              placeholder="请选择父级菜单"
-              allow-clear
-              tree-default-expand-all
-              :field-names="{ children: 'children', label: 'name', value: 'menuId' }"
+            v-model:value="formData.parentId"
+            :tree-data="getFilteredParentOptions()"
+            placeholder="请选择父级菜单"
+            allow-clear
+            tree-default-expand-all
+            :field-names="{ children: 'children', label: 'name', value: 'menuId' }"
           />
         </a-form-item>
         <a-form-item label="文档分组" name="docCatalogGroupId">
@@ -78,7 +81,7 @@
           <a-input v-model:value="formData.icon" placeholder="请输入菜单图标" />
         </a-form-item>
         <a-form-item label="排序" name="sort">
-          <a-input-number v-model:value="formData.sort" :min="0" placeholder="请输入排序" />
+          <a-input-number v-model:value="formData.sort" :min="0" placeholder="请输入排序" style="width: 100%" />
         </a-form-item>
         <a-form-item label="状态" name="status">
           <a-radio-group v-model:value="formData.status">
@@ -140,7 +143,7 @@ const formData = reactive({
   name: '',
   path: '',
   icon: '',
-  sort: 0,
+  sort: undefined,
   status: 2,
   description: '',
   parentId: null as number | null,
@@ -149,8 +152,8 @@ const formData = reactive({
 
 const rules = {
   name: [{ required: true, message: '请输入菜单名称', trigger: 'blur' }],
-  path: [{ required: true, message: '请输入菜单路径', trigger: 'blur' }],
-  sort: [{ required: true, message: '请输入排序', trigger: 'blur' }]
+  path: [],
+  sort: []
 }
 
 const columns = [
@@ -168,6 +171,13 @@ const columns = [
     title: '菜单图标',
     dataIndex: 'icon',
     key: 'icon'
+  },
+  {
+    title: '描述',
+    dataIndex: 'description',
+    key: 'description',
+    width: 200,
+    ellipsis: true
   },
   {
     title: '排序',
@@ -189,11 +199,6 @@ const columns = [
     }
   },
   {
-    title: '描述',
-    dataIndex: 'description',
-    key: 'description'
-  },
-  {
     title: '创建时间',
     dataIndex: 'createTime',
     key: 'createTime',
@@ -212,12 +217,12 @@ const columns = [
 const buildTreeData = (data: MenuItem[]): MenuItem[] => {
   const map = new Map()
   const result: MenuItem[] = []
-
+  
   // 创建映射
   data.forEach(item => {
     map.set(item.id, { ...item, children: [] })
   })
-
+  
   // 构建树形结构
   data.forEach(item => {
     const node = map.get(item.id)
@@ -230,7 +235,7 @@ const buildTreeData = (data: MenuItem[]): MenuItem[] => {
       }
     }
   })
-
+  
   return result
 }
 
@@ -255,18 +260,26 @@ const flattenTreeData = (treeData: MenuItem[]): MenuItem[] => {
 const fetchMenuList = async () => {
   loading.value = true
   try {
-    const pageParam = pagination.current - 1;
-    // 联调真实分页接口 GET /menu/page?page=1&size=10
-    const response = await fetch(`http://localhost:8080/menu/page?page=${pageParam}&size=${pagination.pageSize}&sort=sort,asc`)
-
+    // 使用树形接口获取所有菜单数据
+    const response = await fetch('http://localhost:8080/menu/tree')
+    
     if (response.ok) {
       const data = await response.json()
       if (data.code === 0) {
-        // 适配后端返回结构
-        const content = data.data?.content || []
-        menuList.value = flattenTreeData(content)
-        parentMenuOptions.value = [] // 如需父子关系可后续处理
-        pagination.total = data.data?.totalElements || 0
+        // 直接使用树形数据
+        menuList.value = data.data || []
+        // 计算总记录数（包括所有层级的节点）
+        const countNodes = (nodes) => {
+          let count = 0
+          nodes.forEach(node => {
+            count++
+            if (node.children && node.children.length > 0) {
+              count += countNodes(node.children)
+            }
+          })
+          return count
+        }
+        pagination.total = countNodes(menuList.value)
       } else {
         message.error(data.message || '获取菜单列表失败')
       }
@@ -283,11 +296,26 @@ const fetchMenuList = async () => {
           description: '系统管理模块',
           parentId: null,
           createTime: '2024-01-01 10:00:00',
-          updateTime: '2024-01-01 10:00:00'
+          updateTime: '2024-01-01 10:00:00',
+          children: [
+            {
+              menuId: 2,
+              name: '用户管理',
+              path: '/system/user',
+              icon: 'user',
+              sort: 1,
+              status: 2,
+              description: '用户管理功能',
+              parentId: 1,
+              createTime: '2024-01-01 10:00:00',
+              updateTime: '2024-01-01 10:00:00',
+              children: []
+            }
+          ]
         }
       ]
-      menuList.value = flattenTreeData(mockData)
-      pagination.total = mockData.length
+      menuList.value = mockData // 直接使用树形数据
+      pagination.total = 2 // 模拟总记录数
     }
   } catch (error) {
     console.error('获取菜单列表失败:', error)
@@ -299,16 +327,26 @@ const fetchMenuList = async () => {
 
 // 表格变化处理
 const handleTableChange = (pag: any) => {
-  pagination.current = pag.current
-  pagination.pageSize = pag.pageSize
-  fetchMenuList()
+  // 树形表格不需要分页处理，但保留分页组件用于显示总记录数
+  console.log('表格变化:', pag)
 }
 
 // 显示新增弹窗
 const showAddModal = async () => {
   isEdit.value = false
   modalVisible.value = true
-  resetForm()
+  // 确保完全重置表单数据
+  formData.id = 0
+  formData.name = ''
+  formData.path = ''
+  formData.icon = ''
+  formData.sort = undefined
+  formData.status = 2
+  formData.description = ''
+  formData.parentId = null
+  formData.docCatalogGroupId = undefined
+  // 重置表单校验状态
+  formRef.value?.resetFields()
   await fetchParentMenuTree()
   await fetchDocCatalogGroupList()
 }
@@ -370,7 +408,7 @@ const resetForm = () => {
     name: '',
     path: '',
     icon: '',
-    sort: 0,
+    sort: undefined,
     status: 2,
     description: '',
     parentId: null,
@@ -384,7 +422,7 @@ const handleSubmit = async () => {
   try {
     await formRef.value?.validate()
     submitLoading.value = true
-
+    
     let response
     if (isEdit.value) {
       // 编辑接口联调
@@ -424,7 +462,7 @@ const handleSubmit = async () => {
         })
       })
     }
-
+    
     const resJson = await response.json()
     if (resJson.code === 0) {
       message.success(isEdit.value ? '编辑成功' : '新增成功')
@@ -468,11 +506,11 @@ const getFilteredParentOptions = () => {
   // 递归过滤
   const filterTree = (nodes) => {
     return nodes
-        .filter(node => !excludeIds.has(node.menuId))
-        .map(node => ({
-          ...node,
-          children: node.children ? filterTree(node.children) : []
-        }))
+      .filter(node => !excludeIds.has(node.menuId))
+      .map(node => ({
+        ...node,
+        children: node.children ? filterTree(node.children) : []
+      }))
   }
   return filterTree(parentMenuOptions.value)
 }

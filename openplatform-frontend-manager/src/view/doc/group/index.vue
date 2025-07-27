@@ -1,52 +1,73 @@
 <template>
   <div class="group-manage">
-    <div class="search-form">
-      <a-form layout="inline" :model="searchForm">
-        <a-form-item label="分组名称">
-          <a-input
-            v-model:value="searchForm.name"
-            placeholder="请输入分组名称"
-            allow-clear
-            style="width: 200px"
-          />
-        </a-form-item>
-        <a-form-item label="状态">
-          <a-select
-            v-model:value="searchForm.status"
-            placeholder="请选择状态"
-            style="width: 120px"
-            allow-clear
-          >
-            <a-select-option :value="1">未发布</a-select-option>
-            <a-select-option :value="2">已发布</a-select-option>
-          </a-select>
-        </a-form-item>
-        <a-form-item>
-          <a-space>
-            <a-button type="primary" @click="handleSearch">
-              <template #icon><search-outlined /></template>
-              查询
-            </a-button>
-            <a-button @click="handleReset">
-              <template #icon><reload-outlined /></template>
-              重置
-            </a-button>
-          </a-space>
-        </a-form-item>
-      </a-form>
-    </div>
-
-    <div class="table-operations">
-      <a-button type="primary" @click="showCreateModal">
-        <template #icon><plus-outlined /></template>
-        新建分组
-      </a-button>
+    <div class="top-bar-flex">
+      <div class="top-bar-left">
+        <a-button type="primary" @click="showCreateModal">
+          <template #icon><plus-outlined /></template>
+          新建分组
+        </a-button>
+      </div>
+      <div class="top-bar-right">
+        <a-form layout="inline" :model="searchForm">
+          <a-form-item label="分组名称">
+            <a-input
+              v-model:value="searchForm.name"
+              placeholder="请输入分组名称"
+              allow-clear
+              style="width: 200px"
+            />
+          </a-form-item>
+          <a-form-item label="状态">
+            <a-select
+              v-model:value="searchForm.status"
+              placeholder="请选择状态"
+              style="width: 120px"
+              allow-clear
+            >
+              <a-select-option :value="1">未发布</a-select-option>
+              <a-select-option :value="2">已发布</a-select-option>
+            </a-select>
+          </a-form-item>
+          <a-form-item>
+            <a-space>
+              <a-button type="primary" @click="handleSearch">
+                <template #icon><search-outlined /></template>
+                查询
+              </a-button>
+              <a-button @click="handleReset">
+                <template #icon><reload-outlined /></template>
+                重置
+              </a-button>
+            </a-space>
+          </a-form-item>
+        </a-form>
+      </div>
     </div>
     <a-table
       :columns="columns"
       :data-source="dataSource"
       :loading="loading"
-      :pagination="pagination"
+      :pagination="{
+        current: pagination.current,
+        pageSize: pagination.pageSize,
+        total: pagination.total,
+        showTotal: total => `共 ${total} 条记录`,
+        showQuickJumper: true,
+        showSizeChanger: true,
+        pageSizeOptions: ['10', '20', '50', '100'],
+        locale: {
+          items_per_page: '条/页',
+          jump_to: '跳至',
+          jump_to_confirm: '确定',
+          page: '页',
+          prev_page: '上一页',
+          next_page: '下一页',
+          prev_5: '向前 5 页',
+          next_5: '向后 5 页',
+          prev_3: '向前 3 页',
+          next_3: '向后 3 页',
+        }
+      }"
       @change="handleTableChange"
     >
       <template #bodyCell="{ column, record }">
@@ -107,7 +128,10 @@
           <a-input-number
             v-model:value="formState.sort"
             :min="0"
+            :step="1"
+            :precision="0"
             placeholder="请输入排序号"
+            style="width: 100%"
           />
         </a-form-item>
       </a-form>
@@ -136,7 +160,7 @@ interface FormState {
   id?: string
   name: string
   description: string
-  sort: number
+  sort: number | undefined
 }
 
 interface SearchForm {
@@ -159,15 +183,15 @@ const columns = [
     ellipsis: true,
   },
   {
-    title: '排序',
-    dataIndex: 'sort',
-    key: 'sort',
-    width: 100,
-  },
-  {
     title: '状态',
     dataIndex: 'status',
     key: 'status',
+    width: 100,
+  },
+  {
+    title: '排序',
+    dataIndex: 'sort',
+    key: 'sort',
     width: 100,
   },
   {
@@ -196,13 +220,22 @@ const searchForm = reactive<SearchForm>({
 const formState = reactive<FormState>({
   name: '',
   description: '',
-  sort: 0,
+  sort: undefined,
 })
 
 const rules = {
   name: [{ required: true, message: '请输入分组名称', trigger: 'blur' }],
   description: [],
-  sort: [{ required: true, message: '请输入排序号', trigger: 'blur' }],
+  sort: [
+    {
+      validator: (rule: any, value: any) => {
+        if (value === undefined || value === null || value === '') return Promise.resolve()
+        if (!Number.isInteger(value)) return Promise.reject('只能输入整数')
+        return Promise.resolve()
+      },
+      trigger: 'blur',
+    },
+  ],
 }
 
 const pagination = reactive({
@@ -282,7 +315,7 @@ const showCreateModal = () => {
   formState.id = undefined
   formState.name = ''
   formState.description = ''
-  formState.sort = 0
+  formState.sort = undefined
   modalVisible.value = true
 }
 
@@ -422,19 +455,25 @@ onMounted(() => {
   padding: 24px;
 }
 
-.search-form {
+.top-bar-flex {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   margin-bottom: 16px;
-  padding: 24px 24px 24px 0;
+  padding: 8px 24px 24px 0;
   background: #fff;
   border-radius: 2px;
 }
-
-.search-form :deep(.ant-form-item) {
-  margin-bottom: 0;
+.top-bar-left {
+  flex-shrink: 0;
 }
-
-.table-operations {
-  margin-bottom: 16px;
+.top-bar-right {
+  flex: 1;
+  display: flex;
+  justify-content: flex-end;
+}
+.top-bar-right :deep(.ant-form-item) {
+  margin-bottom: 0;
 }
 
 .text-danger {

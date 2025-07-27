@@ -55,6 +55,7 @@
           <a-tree
             v-model:selectedKeys="selectedKeys"
             v-model:checkedKeys="checkedKeys"
+            v-model:expandedKeys="expandedKeys"
             :tree-data="treeData"
             :checkable="true"
             :block-node="true"
@@ -305,6 +306,7 @@ const selectedGroup = ref<string>('')
 const treeData = ref<TreeNode[]>([])
 const selectedKeys = ref<string[]>([])
 const checkedKeys = ref<string[]>([])
+const expandedKeys = ref<string[]>([])
 const selectedArticle = ref<Article | null>(null)
 const modalVisible = ref(false)
 const modalType = ref<'create' | 'edit'>('create')
@@ -404,6 +406,24 @@ const fetchDocTree = async () => {
     
     if (response.data.code === 0) {
       treeData.value = response.data.data
+      // 默认展开第一个节点及其子节点
+      if (treeData.value.length > 0) {
+        const firstNode = treeData.value[0]
+        const keysToExpand = [firstNode.key]
+        // 递归获取所有子节点的key
+        function getAllChildKeys(node) {
+          const keys = []
+          if (node.children && node.children.length > 0) {
+            node.children.forEach(child => {
+              keys.push(child.key)
+              keys.push(...getAllChildKeys(child))
+            })
+          }
+          return keys
+        }
+        keysToExpand.push(...getAllChildKeys(firstNode))
+        expandedKeys.value = keysToExpand
+      }
       // 检查右侧详情是否还在树中
       if (
         currentApiDocCatalogId.value &&
