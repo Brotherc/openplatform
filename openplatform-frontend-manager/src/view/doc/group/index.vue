@@ -86,14 +86,7 @@
             <a v-if="record.status === 1" @click="handlePublish(record)">发布</a>
             <a v-else @click="handleUnpublish(record)">下架</a>
             <a-divider type="vertical" />
-            <a-popconfirm
-              title="确定要删除这个分组吗？"
-              ok-text="确定"
-              cancel-text="取消"
-              @confirm="handleDelete(record)"
-            >
-              <a class="text-danger">删除</a>
-            </a-popconfirm>
+            <a @click="handleDelete(record)" class="text-danger">删除</a>
           </a-space>
         </template>
       </template>
@@ -141,7 +134,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted, nextTick } from 'vue'
-import { message } from 'ant-design-vue'
+import { message, Modal } from 'ant-design-vue'
 import { PlusOutlined, SearchOutlined, ReloadOutlined } from '@ant-design/icons-vue'
 import type { TablePaginationConfig } from 'ant-design-vue'
 import axios from 'axios'
@@ -387,22 +380,30 @@ const handleModalCancel = () => {
 }
 
 // 删除分组
-const handleDelete = async (record: Group) => {
-  try {
-    const response = await axios.post('http://127.0.0.1:8080/docCatalogGroup/deleteById', {
-      docCatalogGroupId: record.id
-    })
-    
-    if (response.data.code === 0) {
-    message.success('删除成功')
-    fetchGroups()
-    } else {
-      message.error(response.data.message || '删除失败')
+const handleDelete = (record: Group) => {
+  Modal.confirm({
+    title: '确认删除',
+    content: `确定要删除分组"${record.name}"吗？`,
+    okText: '确定',
+    cancelText: '取消',
+    onOk: async () => {
+      try {
+        const response = await axios.post('http://127.0.0.1:8080/docCatalogGroup/deleteById', {
+          docCatalogGroupId: record.id
+        })
+        
+        if (response.data.code === 0) {
+          message.success('删除成功')
+          fetchGroups()
+        } else {
+          message.error(response.data.message || '删除失败')
+        }
+      } catch (error) {
+        console.error('删除失败:', error)
+        message.error('删除失败，请稍后重试')
+      }
     }
-  } catch (error) {
-    console.error('删除失败:', error)
-    message.error('删除失败，请稍后重试')
-  }
+  })
 }
 
 // 发布分组
@@ -459,8 +460,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
-  padding: 8px 24px 24px 0;
+  padding: 0 0 24px 0;
   background: #fff;
   border-radius: 2px;
 }
