@@ -1,6 +1,7 @@
 package com.brotherc.documentcenter.controller;
 
 import com.brotherc.documentcenter.model.dto.apiinfo.ApiInfoDTO;
+import com.brotherc.documentcenter.model.dto.apiinfo.ApiInfoImportDTO;
 import com.brotherc.documentcenter.model.dto.apiinfo.ApiInfoQueryDTO;
 import com.brotherc.documentcenter.model.dto.apiinfo.ApiInfoSaveDTO;
 import com.brotherc.documentcenter.model.dto.common.ResponseDTO;
@@ -33,6 +34,12 @@ public class ApiInfoController {
     @GetMapping("/getByApiInfoCategoryId")
     public Mono<ResponseDTO<ApiInfoDTO>> getByApiInfoCategoryId(@Valid @ParameterObject ApiInfoQueryDTO queryDTO) {
         return apiInfoCategoryService.getByApiInfoCategoryId(queryDTO).map(ResponseDTO::success);
+    }
+
+    @Operation(summary = "导入api信息")
+    @PostMapping("/import")
+    public Mono<ResponseDTO<Void>> importApiInfo(@Valid @RequestBody ApiInfoImportDTO importDTO) {
+        return apiInfoCategoryService.importApiInfo(importDTO).map(o -> ResponseDTO.success());
     }
 
 }

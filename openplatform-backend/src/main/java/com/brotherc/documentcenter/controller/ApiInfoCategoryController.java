@@ -1,5 +1,6 @@
 package com.brotherc.documentcenter.controller;
 
+import com.brotherc.documentcenter.model.dto.apiinfo.ApiInfoImportDTO;
 import com.brotherc.documentcenter.model.dto.apiinfocategory.*;
 import com.brotherc.documentcenter.model.dto.common.ResponseDTO;
 import com.brotherc.documentcenter.service.ApiInfoCategoryService;
@@ -62,6 +63,12 @@ public class ApiInfoCategoryController {
     @PostMapping("/update/status/batch")
     public Mono<ResponseDTO<Void>> updateStatusBatch(@Valid @RequestBody ApiInfoCategoryStatusBatchUpdateDTO statusUpdateDTO) {
         return apiInfoCategoryService.updateStatusBatch(statusUpdateDTO).map(o -> ResponseDTO.success());
+    }
+
+    @Operation(summary = "通过Swagger URL导入API信息")
+    @PostMapping("/import")
+    public Mono<ResponseDTO<Void>> importApiInfo(@Valid @RequestBody ApiInfoImportDTO importDTO) {
+        return apiInfoCategoryService.importApiInfo(importDTO).then(Mono.fromCallable(ResponseDTO::success));
     }
 
 }

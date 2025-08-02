@@ -12,4 +12,6 @@ public interface ApiInfoCategoryRepository extends R2dbcRepository<ApiInfoCatego
 
     Mono<Long> countByParentId(Long parentId);
 
+    Mono<ApiInfoCategory> findByName(String name);
+
 }

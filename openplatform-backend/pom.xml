@@ -83,6 +83,12 @@
 			<artifactId>commons-io</artifactId>
 			<version>1.3.2</version>
 		</dependency>
+
+		<dependency>
+			<groupId>io.github.brotherc</groupId>
+			<artifactId>openapi2apischema-core</artifactId>
+			<version>1.0.0</version>
+		</dependency>
 	</dependencies>
 
 	<dependencyManagement>

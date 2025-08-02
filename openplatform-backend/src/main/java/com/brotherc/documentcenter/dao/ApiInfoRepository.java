@@ -15,4 +15,6 @@ public interface ApiInfoRepository extends R2dbcRepository<ApiInfo, Long> {
 
     Flux<ApiInfo> findAllByApiInfoCategoryIdIn(List<Long> apiInfoCategoryIdList);
 
+    Mono<ApiInfo> findByCode(String code);
+
 }

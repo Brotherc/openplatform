@@ -11,30 +11,37 @@ import com.brotherc.documentcenter.exception.BusinessException;
 import com.brotherc.documentcenter.exception.ExceptionEnum;
 import com.brotherc.documentcenter.helper.ApiInfoHelper;
 import com.brotherc.documentcenter.model.dto.apiinfo.ApiInfoDTO;
+import com.brotherc.documentcenter.model.dto.apiinfo.ApiInfoImportDTO;
 import com.brotherc.documentcenter.model.dto.apiinfo.ApiInfoQueryDTO;
 import com.brotherc.documentcenter.model.dto.apiinfo.ApiInfoSaveDTO;
 import com.brotherc.documentcenter.model.dto.apiinfocategory.*;
 import com.brotherc.documentcenter.model.entity.ApiInfo;
 import com.brotherc.documentcenter.model.entity.ApiInfoCategory;
 import com.brotherc.documentcenter.model.entity.ApiInfoPublish;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.openapi2apischema.core.ApiSchemaGenerator;
+import com.github.openapi2apischema.core.enums.OpenApiVersion;
+import com.github.openapi2apischema.core.model.ApiSchema;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.relational.core.query.Update;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class ApiInfoCategoryService {
 
@@ -48,6 +55,10 @@ public class ApiInfoCategoryService {
     private R2dbcEntityTemplate r2dbcEntityTemplate;
     @Autowired
     private ApiInfoHelper apiInfoHelper;
+    @Autowired
+    private WebClient.Builder webClientBuilder;
+    @Autowired
+    private ObjectMapper objectMapper;
 
     public Mono<List<ApiInfoCategoryNodeDTO>> getTree() {
         return apiInfoCategoryRepository.findAll()
@@ -393,6 +404,211 @@ public class ApiInfoCategoryService {
     public Mono<ApiInfoDTO> getByApiInfoCategoryId(ApiInfoQueryDTO queryDTO) {
         return apiInfoRepository.findByApiInfoCategoryId(queryDTO.getApiInfoCategoryId())
                 .map(apiInfo -> apiInfoHelper.generateApiInfoDTO(apiInfo));
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public Mono<Void> importApiInfo(ApiInfoImportDTO importDTO) {
+        // 1. 通过URL获取Swagger JSON数据
+        return fetchSwaggerJson(importDTO.getUrl())
+                .flatMap(json -> {
+                    try {
+                        // 2. 解析Swagger JSON生成ApiSchema列表
+                        List<ApiSchema> apiSchemas = ApiSchemaGenerator.generateBySwaggerJson(OpenApiVersion.V2, json);
+
+                        // 3. 获取所有的tags
+                        Set<String> allTags = apiSchemas.stream()
+                                .flatMap(schema -> schema.getTags().stream())
+                                .collect(Collectors.toSet());
+
+                        // 4. 处理tags（创建或查找api分类）
+                        return processTagsAndCreateCategories(allTags)
+                                .flatMap(tagCategoryMap -> {
+                                    // 5. 处理每个ApiSchema
+                                    return processApiSchemas(apiSchemas, tagCategoryMap);
+                                });
+
+                    } catch (Exception e) {
+                        log.error("解析Swagger JSON失败", e);
+                        return Mono.error(new BusinessException(ExceptionEnum.SYS_ERROR));
+                    }
+                })
+                .then();
+    }
+
+    /**
+     * 通过URL获取Swagger JSON数据
+     */
+    private Mono<String> fetchSwaggerJson(String url) {
+        return webClientBuilder.build()
+                .get()
+                .uri(url)
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .bodyToMono(String.class)
+                .onErrorMap(e -> {
+                    log.error("获取Swagger JSON失败，URL: {}", url, e);
+                    return new BusinessException(ExceptionEnum.SYS_ERROR);
+                });
+    }
+
+    /**
+     * 处理tags，创建或查找对应的api分类
+     */
+    private Mono<Map<String, Long>> processTagsAndCreateCategories(Set<String> tags) {
+        return Flux.fromIterable(tags)
+                .flatMap(tag ->
+                    // 查找是否存在该tag对应的分类
+                    apiInfoCategoryRepository.findByName(tag)
+                            .switchIfEmpty(
+                                // 不存在则创建
+                                Mono.defer(() -> {
+                                    ApiInfoCategory category = new ApiInfoCategory();
+                                    category.setName(tag);
+                                    category.setParentId(0L);
+                                    category.setType(ApiInfoCategoryTypeEnum.CATEGORY.getCode());
+                                    category.setStatus(PublishStatusEnum.UN_PUBLISH.getCode());
+                                    category.setCreateBy(DefaultConstant.DEFAULT_CREATE_BY);
+                                    category.setUpdateBy(DefaultConstant.DEFAULT_UPDATE_BY);
+                                    category.setCreateTime(LocalDateTime.now());
+                                    category.setUpdateTime(LocalDateTime.now());
+                                    return apiInfoCategoryRepository.save(category);
+                                })
+                            )
+                            .map(category -> Map.entry(tag, category.getApiInfoCategoryId()))
+                )
+                .collectMap(Map.Entry::getKey, Map.Entry::getValue);
+    }
+
+    /**
+     * 处理ApiSchema列表，创建或更新api
+     */
+    private Mono<Void> processApiSchemas(List<ApiSchema> apiSchemas, Map<String, Long> tagCategoryMap) {
+        return Flux.fromIterable(apiSchemas)
+                .flatMap(apiSchema -> {
+                    // 只取第一个tag创建API分类和API信息
+                    if (apiSchema.getTags() == null || apiSchema.getTags().isEmpty()) {
+                        log.warn("ApiSchema没有tags，跳过处理: {}", apiSchema.getPath());
+                        return Mono.empty();
+                    }
+
+                    String firstTag = apiSchema.getTags().get(0);
+                    Long parentCategoryId = tagCategoryMap.get(firstTag);
+                    if (parentCategoryId == null) {
+                        log.warn("未找到tag对应的分类: {}", firstTag);
+                        return Mono.empty();
+                    }
+
+                    return processApiSchema(apiSchema, parentCategoryId);
+                })
+                .then();
+    }
+
+    /**
+     * 处理单个ApiSchema
+     */
+    private Mono<Void> processApiSchema(ApiSchema apiSchema, Long parentCategoryId) {
+        return apiInfoRepository.findByCode(apiSchema.getCode())
+                .flatMap(existingApi -> {
+                    // 存在则更新
+                    return updateExistingApi(existingApi, apiSchema);
+                })
+                .switchIfEmpty(
+                    // 不存在则创建
+                    Mono.defer(() -> createNewApi(apiSchema, parentCategoryId))
+                )
+                .then();
+    }
+
+    /**
+     * 更新已存在的API
+     */
+    private Mono<ApiInfo> updateExistingApi(ApiInfo existingApi, ApiSchema apiSchema) {
+        try {
+            // 更新API信息
+            updateApiInfoFromSchema(existingApi, apiSchema);
+            existingApi.setUpdateBy(DefaultConstant.DEFAULT_UPDATE_BY);
+            existingApi.setUpdateTime(LocalDateTime.now());
+
+            return apiInfoRepository.save(existingApi);
+        } catch (Exception e) {
+            log.error("更新API信息失败，code: {}", existingApi.getCode(), e);
+            return Mono.error(new BusinessException(ExceptionEnum.SYS_UPDATE_ERROR));
+        }
+    }
+
+    /**
+     * 创建API
+     */
+    private Mono<ApiInfo> createNewApi(ApiSchema apiSchema, Long parentCategoryId) {
+        return createApiCategory(apiSchema.getCnName(), parentCategoryId)
+                .flatMap(apiCategory -> {
+                    try {
+                        // 创建API信息
+                        ApiInfo apiInfo = new ApiInfo();
+                        apiInfo.setName(apiSchema.getName());
+                        apiInfo.setDescription(apiSchema.getDescription());
+                        apiInfo.setCnName(apiSchema.getCnName());
+                        apiInfo.setCode(apiSchema.getCode());
+                        apiInfo.setApiInfoCategoryId(apiCategory.getApiInfoCategoryId());
+                        apiInfo.setStatus(PublishStatusEnum.UN_PUBLISH.getCode());
+
+                        updateApiInfoFromSchema(apiInfo, apiSchema);
+
+                        apiInfo.setCreateBy(DefaultConstant.DEFAULT_CREATE_BY);
+                        apiInfo.setUpdateBy(DefaultConstant.DEFAULT_UPDATE_BY);
+                        apiInfo.setCreateTime(LocalDateTime.now());
+                        apiInfo.setUpdateTime(LocalDateTime.now());
+
+                        return apiInfoRepository.save(apiInfo);
+                    } catch (Exception e) {
+                        log.error("创建API信息失败，code: {}", apiSchema.getCode(), e);
+                        return Mono.error(new BusinessException(ExceptionEnum.SYS_SAVE_ERROR));
+                    }
+                });
+    }
+
+    /**
+     * 创建API分类
+     */
+    private Mono<ApiInfoCategory> createApiCategory(String apiName, Long parentCategoryId) {
+        ApiInfoCategory apiCategory = new ApiInfoCategory();
+        apiCategory.setName(apiName);
+        apiCategory.setParentId(parentCategoryId);
+        apiCategory.setType(ApiInfoCategoryTypeEnum.API.getCode());
+        apiCategory.setStatus(PublishStatusEnum.UN_PUBLISH.getCode());
+        apiCategory.setCreateBy(DefaultConstant.DEFAULT_CREATE_BY);
+        apiCategory.setUpdateBy(DefaultConstant.DEFAULT_UPDATE_BY);
+        apiCategory.setCreateTime(LocalDateTime.now());
+        apiCategory.setUpdateTime(LocalDateTime.now());
+
+        return apiInfoCategoryRepository.save(apiCategory);
+    }
+
+    /**
+     * 根据ApiSchema更新api信息
+     */
+    private void updateApiInfoFromSchema(ApiInfo apiInfo, ApiSchema apiSchema) throws Exception {
+        apiInfo.setReqMethod(apiSchema.getMethod());
+        apiInfo.setReqContextPath(apiSchema.getBasePath());
+        apiInfo.setReqPath(apiSchema.getPath());
+
+        // 处理请求参数
+        if (apiSchema.getParameters() != null) {
+            apiInfo.setReqParam(objectMapper.writeValueAsString(apiSchema.getParameters()));
+        }
+
+        if (apiSchema.getDisplayParameters() != null) {
+            apiInfo.setReqParamDisplay(objectMapper.writeValueAsString(apiSchema.getDisplayParameters()));
+        }
+
+        // 处理响应体
+        if (apiSchema.getResponses() != null) {
+            apiInfo.setReturnInfo(objectMapper.writeValueAsString(apiSchema.getResponses()));
+        }
+
+        if (apiSchema.getDisplayResponses() != null) {
+            apiInfo.setReturnInfoDisplay(objectMapper.writeValueAsString(apiSchema.getDisplayResponses()));
+        }
     }
 
 }
