@@ -161,7 +161,7 @@ public class ApiInfoHelper {
             if ("array".equals(paramType)) {
                 JsonNode children = param.get(ApiInfoCategoryConstant.CHILDREN);
                 param.remove(ApiInfoCategoryConstant.CHILDREN);
-                param.set(ApiInfoCategoryConstant.ITEMS, children);
+                param.set(ApiInfoCategoryConstant.ITEMS, children.get(0));
                 ((ObjectNode) (children.get(0))).put("name", "");
 
                 handleParam((ObjectNode) (children.get(0)), type);
@@ -245,10 +245,12 @@ public class ApiInfoHelper {
         if ("array".equals(paramType)) {
             JsonNode items = param.get(ApiInfoCategoryConstant.ITEMS);
             param.remove(ApiInfoCategoryConstant.ITEMS);
-            param.set(ApiInfoCategoryConstant.CHILDREN, items);
-            ((ObjectNode) (items.get(0))).put("name", ApiInfoCategoryConstant.ITEMS);
+            ArrayNode children = objectMapper.createArrayNode();
+            children.add(items);
+            param.set(ApiInfoCategoryConstant.CHILDREN, children);
+            ((ObjectNode) (items)).put("name", ApiInfoCategoryConstant.ITEMS);
 
-            handleParam((ObjectNode) (items.get(0)));
+            handleParam((ObjectNode) (items));
         } else if ("object".equals(paramType) || "refObject".equals(paramType)) {
             JsonNode properties = param.get(ApiInfoCategoryConstant.PROPERTIES);
             param.remove(ApiInfoCategoryConstant.PROPERTIES);
