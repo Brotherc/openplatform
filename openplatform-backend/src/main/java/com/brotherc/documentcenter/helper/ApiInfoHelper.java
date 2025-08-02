@@ -241,6 +241,9 @@ public class ApiInfoHelper {
     }
 
     public void handleParam(ObjectNode param) {
+        if (param.isEmpty()) {
+            return;
+        }
         String paramType = param.get("type").asText();
         if ("array".equals(paramType)) {
             JsonNode items = param.get(ApiInfoCategoryConstant.ITEMS);
