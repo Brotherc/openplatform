@@ -17,6 +17,8 @@ public class ApiInfoCategoryConstant {
 
     public static final String ITEMS = "items";
 
+    public static final String REQUIRED = "required";
+
     public static final String PROPERTIES = "properties";
 
 }

@@ -15,6 +15,8 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.Optional;
+
 @Slf4j
 @Component
 public class ApiInfoHelper {
@@ -252,6 +254,10 @@ public class ApiInfoHelper {
             children.add(items);
             param.set(ApiInfoCategoryConstant.CHILDREN, children);
             ((ObjectNode) (items)).put("name", ApiInfoCategoryConstant.ITEMS);
+            boolean required = Optional.ofNullable(param.get(ApiInfoCategoryConstant.REQUIRED)).map(JsonNode::asBoolean).orElse(false);
+            if (items.get(ApiInfoCategoryConstant.REQUIRED).isNull()) {
+                ((ObjectNode) (items)).put(ApiInfoCategoryConstant.REQUIRED, required);
+            }
 
             handleParam((ObjectNode) (items));
         } else if ("object".equals(paramType) || "refObject".equals(paramType)) {
