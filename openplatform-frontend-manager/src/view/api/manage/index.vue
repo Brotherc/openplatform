@@ -57,9 +57,8 @@
                   <folder-outlined v-if="type === 1" style="margin-right: 8px" />
                   <api-outlined v-else style="margin-right: 8px" />
                   <span class="node-title" :title="title">{{ title }}</span>
-                  <a-tag v-if="type === 2" :color="dataRef.status === 2 ? 'success' : 'error'" style="margin-left: 8px; flex-shrink: 0;">
-                    {{ dataRef.status === 2 ? '已发布' : '未发布' }}
-                  </a-tag>
+                  <check-circle-outlined v-if="type === 2 && dataRef.status === 2" style="margin-left: 8px; color: #52c41a; flex-shrink: 0;" />
+                  <close-circle-outlined v-if="type === 2 && dataRef.status === 1" style="margin-left: 8px; color: #ff4d4f; flex-shrink: 0;" />
                   <div class="node-actions" @click.stop>
                     <a-dropdown :trigger="['click']">
                       <a class="ant-dropdown-link" @click.prevent.stop>
@@ -1236,7 +1235,7 @@ onMounted(() => {
   position: relative;
   z-index: 1;
   overflow: hidden;
-  min-width: 350px;
+  min-width: 300px;
   border-right: 1px solid #f0f0f0;
 }
 
