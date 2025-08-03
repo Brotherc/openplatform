@@ -747,6 +747,12 @@ const insertParamEvent = async (type: string) => {
       id: rid,
       parentId: null
     }
+    
+    // 如果是响应参数，给根节点设置默认名称
+    if (type === 'response') {
+      record.name = ' '
+    }
+    
     const { row: newRow } = await $table.insertAt(record, -1)
     await $table.setEditRow(newRow)
   }
@@ -778,6 +784,11 @@ const disableName = (type: string, row: RowVO): boolean => {
   const $table = getTableRefByParamType(type)
   if ($table) {
     const parentRow = $table.getParentRow(row)
+    // 如果是响应参数的第一个根节点，禁用名称编辑
+    if (type === 'response' && row.parentId === null) {
+      return true
+    }
+    // 如果是array类型的子节点，禁用名称编辑
     return parentRow && parentRow.type === 'array'
   }
   return false
