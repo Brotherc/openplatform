@@ -26,10 +26,10 @@
                     </a-menu-item>
                     <a-menu-item :disabled="checkedKeys.length === 0">
                       <a-popconfirm
-                        title="确定要删除选中的节点吗？"
-                        ok-text="确定"
-                        cancel-text="取消"
-                        @confirm="() => handleBatchDelete(checkedKeys)"
+                          title="确定要删除选中的节点吗？"
+                          ok-text="确定"
+                          cancel-text="取消"
+                          @confirm="() => handleBatchDelete(checkedKeys)"
                       >
                         <span>
                           <delete-outlined />
@@ -44,13 +44,13 @@
           </div>
           <div class="tree-content">
             <a-tree
-              v-model:selectedKeys="selectedKeys"
-              v-model:checkedKeys="checkedKeys"
-              :tree-data="treeData"
-              :block-node="true"
-              :checkable="true"
-              @select="onSelect"
-              @check="onCheck"
+                v-model:selectedKeys="selectedKeys"
+                v-model:checkedKeys="checkedKeys"
+                :tree-data="treeData"
+                :block-node="true"
+                :checkable="true"
+                @select="onSelect"
+                @check="onCheck"
             >
               <template #title="{ title, type, dataRef }">
                 <div class="tree-node-content">
@@ -80,10 +80,10 @@
                             下架
                           </a-menu-item>
                           <a-popconfirm
-                            title="确定要删除这个节点吗？"
-                            ok-text="确定"
-                            cancel-text="取消"
-                            @confirm="() => handleDelete(dataRef.key)"
+                              title="确定要删除这个节点吗？"
+                              ok-text="确定"
+                              cancel-text="取消"
+                              @confirm="() => handleDelete(dataRef.key)"
                           >
                             <a-menu-item key="delete">
                               <delete-outlined />
@@ -111,8 +111,8 @@
           </div>
           <div class="detail-content">
             <a-form
-              :model="apiForm"
-              layout="vertical"
+                :model="apiForm"
+                layout="vertical"
             >
               <a-row :gutter="16">
                 <a-col :span="12">
@@ -161,203 +161,202 @@
               <a-row :gutter="16">
                 <a-col :span="24">
                   <a-form-item label="请求参数">
-                      <a-tabs v-model:activeKey="activeKey">
-                        <a-tab-pane key="queryParam" tab="Query参数">
-                          <a-space style="margin-bottom: 16px;">
-                            <a-button @click="insertParamEvent('param')">新增</a-button>
-                            <a-button @click="searchMethod('param')">刷新</a-button>
-                          </a-space>
+                    <a-tabs v-model:activeKey="activeKey">
+                      <a-tab-pane key="queryParam" tab="Query参数">
+                        <a-space style="margin-bottom: 16px;">
+                          <a-button @click="insertParamEvent('param')">新增</a-button>
+                          <a-button @click="searchMethod('param')">刷新</a-button>
+                        </a-space>
 
-                          <vxe-table
-                              show-overflow
-                              keep-source
-                              ref="tableRef"
-                              :row-config="{keyField: 'id',drag: true}"
-                              :loading="loading"
-                              :tree-config="{transform: true, rowField: 'id', parentField: 'parentId', expandAll: true, defaultExpandAll: true}"
-                              :edit-rules=paramRules
-                              :valid-config="{ msgMode: 'full', theme: 'normal' }"
-                              :edit-config="{trigger: 'click', mode: 'row', showStatus: true}"
-                              :data="tableData">
-                            <vxe-column field="name" title="名称" drag-sort width="250" tree-node :edit-render="{}">
-                              <template #edit="{ row }">
-                                <vxe-input v-model="row.name" mode="text"
-                                           :disabled="disableName('param', row)"></vxe-input>
-                              </template>
-                            </vxe-column>
-                            <vxe-column field="type" title="类型" width="125" :edit-render="{}">
-                              <template #default="{ row }">
-                                <span>{{ row.type }}</span>
-                              </template>
-                              <template #edit="{ row }">
-                                <vxe-select v-model="row.type" transfer
-                                            @change="onTypeChange('param', row, $event.value)">
-                                  <vxe-option v-for="item in paramType" :key="item.value" :value="item.value"
-                                              :label="item.label" :disabled="item.disabled"></vxe-option>
-                                </vxe-select>
-                              </template>
-                            </vxe-column>
-                            <vxe-column field="required" title="必填" width="100" :edit-render="{}">
-                              <template #default="{ row }">
-                                <span>{{ row.required ? '是' : '否' }}</span>
-                              </template>
-                              <template #edit="{ row }">
-                                <vxe-select v-model="row.required" transfer>
-                                  <vxe-option v-for="item in required" :key="item.value" :value="item.value"
-                                              :label="item.label" :disabled="item.disabled"></vxe-option>
-                                </vxe-select>
-                              </template>
-                            </vxe-column>
-                            <vxe-column field="example" title="示例值" width="150" :edit-render="{}">
-                              <template #edit="{ row }">
-                                <vxe-input v-model="row.example" mode="text"></vxe-input>
-                              </template>
-                            </vxe-column>
-                            <vxe-column field="description" title="描述" width="175" :edit-render="{}">
-                              <template #edit="{ row }">
-                                <vxe-input v-model="row.description" mode="text"></vxe-input>
-                              </template>
-                            </vxe-column>
-                            <vxe-column title="操作">
-                              <template #default="{ row }">
-                                <a-button type="link" @click="insertNextRow('param', row, 'current')" :disabled="disableAddBrother('param', row)">添加相邻节点</a-button>
-                                <a-button type="link" @click="insertRow('param', row, 'bottom')" :disabled="disableAddChildren('param', row)">添加子节点</a-button>
-                                <a-button type="link" @click="removeRow('param', row)" danger>删除</a-button>
-                              </template>
-                            </vxe-column>
-                          </vxe-table>
-                        </a-tab-pane>
-                        <a-tab-pane key="bodyParam" tab="Body">
-                          <a-space style="margin-bottom: 16px;">
-                            <a-button @click="insertParamEvent('body')">新增</a-button>
-                            <a-button @click="searchMethod('body')">刷新</a-button>
-                          </a-space>
+                        <vxe-table
+                            show-overflow
+                            keep-source
+                            ref="tableRef"
+                            :row-config="{keyField: 'id',drag: true}"
+                            :loading="loading"
+                            :tree-config="{transform: true, rowField: 'id', parentField: 'parentId', expandAll: true, defaultExpandAll: true}"
+                            :edit-rules=paramRules
+                            :valid-config="{ msgMode: 'full', theme: 'normal' }"
+                            :edit-config="{trigger: 'click', mode: 'row', showStatus: true}"
+                            :data="tableData">
+                          <vxe-column field="name" title="名称" drag-sort width="250" tree-node :edit-render="{}">
+                            <template #edit="{ row }">
+                              <vxe-input v-model="row.name" mode="text"
+                                         :disabled="disableName('param', row)"></vxe-input>
+                            </template>
+                          </vxe-column>
+                          <vxe-column field="type" title="类型" width="125" :edit-render="{}">
+                            <template #default="{ row }">
+                              <span>{{ row.type }}</span>
+                            </template>
+                            <template #edit="{ row }">
+                              <vxe-select v-model="row.type" transfer
+                                          @change="onTypeChange('param', row, $event.value)">
+                                <vxe-option v-for="item in paramType" :key="item.value" :value="item.value"
+                                            :label="item.label" :disabled="item.disabled"></vxe-option>
+                              </vxe-select>
+                            </template>
+                          </vxe-column>
+                          <vxe-column field="required" title="必填" width="100" :edit-render="{}">
+                            <template #default="{ row }">
+                              <span>{{ row.required ? '是' : '否' }}</span>
+                            </template>
+                            <template #edit="{ row }">
+                              <vxe-select v-model="row.required" transfer>
+                                <vxe-option v-for="item in required" :key="item.value" :value="item.value"
+                                            :label="item.label" :disabled="item.disabled"></vxe-option>
+                              </vxe-select>
+                            </template>
+                          </vxe-column>
+                          <vxe-column field="example" title="示例值" width="150" :edit-render="{}">
+                            <template #edit="{ row }">
+                              <vxe-input v-model="row.example" mode="text"></vxe-input>
+                            </template>
+                          </vxe-column>
+                          <vxe-column field="description" title="描述" width="175" :edit-render="{}">
+                            <template #edit="{ row }">
+                              <vxe-input v-model="row.description" mode="text"></vxe-input>
+                            </template>
+                          </vxe-column>
+                          <vxe-column title="操作">
+                            <template #default="{ row }">
+                              <a-button type="link" @click="insertNextRow('param', row, 'current')" :disabled="disableAddBrother('param', row)">添加相邻节点</a-button>
+                              <a-button type="link" @click="insertRow('param', row, 'bottom')" :disabled="disableAddChildren('param', row)">添加子节点</a-button>
+                              <a-button type="link" @click="removeRow('param', row)" danger>删除</a-button>
+                            </template>
+                          </vxe-column>
+                        </vxe-table>
+                      </a-tab-pane>
+                      <a-tab-pane key="bodyParam" tab="Body">
+                        <a-space style="margin-bottom: 16px;">
+                          <a-button @click="insertParamEvent('body')">新增</a-button>
+                          <a-button @click="searchMethod('body')">刷新</a-button>
+                        </a-space>
 
-                          <vxe-table
-                              show-overflow
-                              keep-source
-                              ref="bodyTableRef"
-                              :row-config="{keyField: 'id',drag: true}"
-                              :loading="loading"
-                              :tree-config="{transform: true, rowField: 'id', parentField: 'parentId', expandAll: true, defaultExpandAll: true}"
-                              :edit-rules=paramRules
-                              :valid-config="{ msgMode: 'full', theme: 'normal' }"
-                              :edit-config="{trigger: 'click', mode: 'row', showStatus: true}"
-                              :data="bodyTableData">
-                            <vxe-column field="name" title="名称" drag-sort width="250" tree-node :edit-render="{}">
-                              <template #edit="{ row }">
-                                <vxe-input v-model="row.name" mode="text"
-                                           :disabled="disableName('body', row)"></vxe-input>
-                              </template>
-                            </vxe-column>
-                            <vxe-column field="type" title="类型" width="125" :edit-render="{}">
-                              <template #default="{ row }">
-                                <span>{{ row.type }}</span>
-                              </template>
-                              <template #edit="{ row }">
-                                <vxe-select v-model="row.type" transfer
-                                            @change="onTypeChange('body', row, $event.value)">
-                                  <vxe-option v-for="item in paramType" :key="item.value" :value="item.value"
-                                              :label="item.label" :disabled="item.disabled"></vxe-option>
-                                </vxe-select>
-                              </template>
-                            </vxe-column>
-                            <vxe-column field="required" title="必填" width="100" :edit-render="{}">
-                              <template #default="{ row }">
-                                <span>{{ row.required ? '是' : '否' }}</span>
-                              </template>
-                              <template #edit="{ row }">
-                                <vxe-select v-model="row.required" transfer>
-                                  <vxe-option v-for="item in required" :key="item.value" :value="item.value"
-                                              :label="item.label" :disabled="item.disabled"></vxe-option>
-                                </vxe-select>
-                              </template>
-                            </vxe-column>
-                            <vxe-column field="example" title="示例值" width="150" :edit-render="{}">
-                              <template #edit="{ row }">
-                                <vxe-input v-model="row.example" mode="text"></vxe-input>
-                              </template>
-                            </vxe-column>
-                            <vxe-column field="description" title="描述" width="175" :edit-render="{}">
-                              <template #edit="{ row }">
-                                <vxe-input v-model="row.description" mode="text"></vxe-input>
-                              </template>
-                            </vxe-column>
-                            <vxe-column title="操作">
-                              <template #default="{ row }">
-                                <a-button type="link" @click="insertNextRow('body', row, 'current')" :disabled="disableAddBrother('body', row)">添加相邻节点</a-button>
-                                <a-button type="link" @click="insertRow('body', row, 'bottom')" :disabled="disableAddChildren('body', row)">添加子节点</a-button>
-                                <a-button type="link" @click="removeRow('body', row)" danger>删除
-                                </a-button>
-                              </template>
-                            </vxe-column>
-                          </vxe-table>
-                        </a-tab-pane>
-                        <a-tab-pane key="pathParam" tab="Path参数">
-                          <a-space style="margin-bottom: 16px;">
-                            <a-button @click="insertParamEvent('path')">新增</a-button>
-                            <a-button @click="searchMethod('path')">刷新</a-button>
-                          </a-space>
+                        <vxe-table
+                            show-overflow
+                            keep-source
+                            ref="bodyTableRef"
+                            :row-config="{keyField: 'id',drag: true}"
+                            :loading="loading"
+                            :tree-config="{transform: true, rowField: 'id', parentField: 'parentId', expandAll: true, defaultExpandAll: true}"
+                            :edit-rules=paramRules
+                            :valid-config="{ msgMode: 'full', theme: 'normal' }"
+                            :edit-config="{trigger: 'click', mode: 'row', showStatus: true}"
+                            :data="bodyTableData">
+                          <vxe-column field="name" title="名称" drag-sort width="250" tree-node :edit-render="{}">
+                            <template #edit="{ row }">
+                              <vxe-input v-model="row.name" mode="text"
+                                         :disabled="disableName('body', row)"></vxe-input>
+                            </template>
+                          </vxe-column>
+                          <vxe-column field="type" title="类型" width="125" :edit-render="{}">
+                            <template #default="{ row }">
+                              <span>{{ row.type }}</span>
+                            </template>
+                            <template #edit="{ row }">
+                              <vxe-select v-model="row.type" transfer
+                                          @change="onTypeChange('body', row, $event.value)">
+                                <vxe-option v-for="item in paramType" :key="item.value" :value="item.value"
+                                            :label="item.label" :disabled="item.disabled"></vxe-option>
+                              </vxe-select>
+                            </template>
+                          </vxe-column>
+                          <vxe-column field="required" title="必填" width="100" :edit-render="{}">
+                            <template #default="{ row }">
+                              <span>{{ row.required ? '是' : '否' }}</span>
+                            </template>
+                            <template #edit="{ row }">
+                              <vxe-select v-model="row.required" transfer>
+                                <vxe-option v-for="item in required" :key="item.value" :value="item.value"
+                                            :label="item.label" :disabled="item.disabled"></vxe-option>
+                              </vxe-select>
+                            </template>
+                          </vxe-column>
+                          <vxe-column field="example" title="示例值" width="150" :edit-render="{}">
+                            <template #edit="{ row }">
+                              <vxe-input v-model="row.example" mode="text"></vxe-input>
+                            </template>
+                          </vxe-column>
+                          <vxe-column field="description" title="描述" width="175" :edit-render="{}">
+                            <template #edit="{ row }">
+                              <vxe-input v-model="row.description" mode="text"></vxe-input>
+                            </template>
+                          </vxe-column>
+                          <vxe-column title="操作">
+                            <template #default="{ row }">
+                              <a-button type="link" @click="insertNextRow('body', row, 'current')" :disabled="disableAddBrother('body', row)">添加相邻节点</a-button>
+                              <a-button type="link" @click="insertRow('body', row, 'bottom')" :disabled="disableAddChildren('body', row)">添加子节点</a-button>
+                              <a-button type="link" @click="removeRow('body', row)" danger>删除</a-button>
+                            </template>
+                          </vxe-column>
+                        </vxe-table>
+                      </a-tab-pane>
+                      <a-tab-pane key="pathParam" tab="Path参数">
+                        <a-space style="margin-bottom: 16px;">
+                          <a-button @click="insertParamEvent('path')">新增</a-button>
+                          <a-button @click="searchMethod('path')">刷新</a-button>
+                        </a-space>
 
-                          <vxe-table
-                              show-overflow
-                              keep-source
-                              ref="pathTableRef"
-                              :row-config="{keyField: 'id',drag: true}"
-                              :loading="loading"
-                              :tree-config="{transform: true, rowField: 'id', parentField: 'parentId', expandAll: true, defaultExpandAll: true}"
-                              :edit-rules=paramRules
-                              :valid-config="{ msgMode: 'full', theme: 'normal' }"
-                              :edit-config="{trigger: 'click', mode: 'row', showStatus: true}"
-                              :data="pathTableData">
-                            <vxe-column field="name" title="名称" drag-sort width="250" tree-node :edit-render="{}">
-                              <template #edit="{ row }">
-                                <vxe-input v-model="row.name" mode="text"
-                                           :disabled="disableName('path', row)"></vxe-input>
-                              </template>
-                            </vxe-column>
-                            <vxe-column field="type" title="类型" width="125" :edit-render="{}">
-                              <template #default="{ row }">
-                                <span>{{ row.type }}</span>
-                              </template>
-                              <template #edit="{ row }">
-                                <vxe-select v-model="row.type" transfer
-                                            @change="onTypeChange('path', row, $event.value)">
-                                  <vxe-option v-for="item in pathParamType" :key="item.value" :value="item.value"
-                                              :label="item.label" :disabled="item.disabled"></vxe-option>
-                                </vxe-select>
-                              </template>
-                            </vxe-column>
-                            <vxe-column field="required" title="必填" width="100" :edit-render="{}">
-                              <template #default="{ row }">
-                                <span>{{ row.required ? '是' : '否' }}</span>
-                              </template>
-                              <template #edit="{ row }">
-                                <vxe-select v-model="row.required" transfer>
-                                  <vxe-option v-for="item in required" :key="item.value" :value="item.value"
-                                              :label="item.label" :disabled="item.disabled"></vxe-option>
-                                </vxe-select>
-                              </template>
-                            </vxe-column>
-                            <vxe-column field="example" title="示例值" width="150" :edit-render="{}">
-                              <template #edit="{ row }">
-                                <vxe-input v-model="row.example" mode="text"></vxe-input>
-                              </template>
-                            </vxe-column>
-                            <vxe-column field="description" title="描述" width="175" :edit-render="{}">
-                              <template #edit="{ row }">
-                                <vxe-input v-model="row.description" mode="text"></vxe-input>
-                              </template>
-                            </vxe-column>
-                            <vxe-column title="操作">
-                              <template #default="{ row }">
-                                <a-button type="link" @click="insertNextRow('path', row, 'current')">添加相邻节点</a-button>
-                                <a-button type="link" @click="removeRow('path', row)" danger>删除</a-button>
-                              </template>
-                            </vxe-column>
-                          </vxe-table>
-                        </a-tab-pane>
-                      </a-tabs>
+                        <vxe-table
+                            show-overflow
+                            keep-source
+                            ref="pathTableRef"
+                            :row-config="{keyField: 'id',drag: true}"
+                            :loading="loading"
+                            :tree-config="{transform: true, rowField: 'id', parentField: 'parentId', expandAll: true, defaultExpandAll: true}"
+                            :edit-rules=paramRules
+                            :valid-config="{ msgMode: 'full', theme: 'normal' }"
+                            :edit-config="{trigger: 'click', mode: 'row', showStatus: true}"
+                            :data="pathTableData">
+                          <vxe-column field="name" title="名称" drag-sort width="250" tree-node :edit-render="{}">
+                            <template #edit="{ row }">
+                              <vxe-input v-model="row.name" mode="text"
+                                         :disabled="disableName('path', row)"></vxe-input>
+                            </template>
+                          </vxe-column>
+                          <vxe-column field="type" title="类型" width="125" :edit-render="{}">
+                            <template #default="{ row }">
+                              <span>{{ row.type }}</span>
+                            </template>
+                            <template #edit="{ row }">
+                              <vxe-select v-model="row.type" transfer
+                                          @change="onTypeChange('path', row, $event.value)">
+                                <vxe-option v-for="item in pathParamType" :key="item.value" :value="item.value"
+                                            :label="item.label" :disabled="item.disabled"></vxe-option>
+                              </vxe-select>
+                            </template>
+                          </vxe-column>
+                          <vxe-column field="required" title="必填" width="100" :edit-render="{}">
+                            <template #default="{ row }">
+                              <span>{{ row.required ? '是' : '否' }}</span>
+                            </template>
+                            <template #edit="{ row }">
+                              <vxe-select v-model="row.required" transfer>
+                                <vxe-option v-for="item in required" :key="item.value" :value="item.value"
+                                            :label="item.label" :disabled="item.disabled"></vxe-option>
+                              </vxe-select>
+                            </template>
+                          </vxe-column>
+                          <vxe-column field="example" title="示例值" width="150" :edit-render="{}">
+                            <template #edit="{ row }">
+                              <vxe-input v-model="row.example" mode="text"></vxe-input>
+                            </template>
+                          </vxe-column>
+                          <vxe-column field="description" title="描述" width="175" :edit-render="{}">
+                            <template #edit="{ row }">
+                              <vxe-input v-model="row.description" mode="text"></vxe-input>
+                            </template>
+                          </vxe-column>
+                          <vxe-column title="操作">
+                            <template #default="{ row }">
+                              <a-button type="link" @click="insertNextRow('path', row, 'current')">添加相邻节点</a-button>
+                              <a-button type="link" @click="removeRow('path', row)" danger>删除</a-button>
+                            </template>
+                          </vxe-column>
+                        </vxe-table>
+                      </a-tab-pane>
+                    </a-tabs>
                   </a-form-item>
                 </a-col>
               </a-row>
@@ -366,67 +365,65 @@
                 <a-col :span="24">
                   <a-form-item label="响应参数">
 
-                      <a-space style="margin-bottom: 16px;">
-                        <a-button @click="insertParamEvent('response')" :disabled="hasRootNode('response')">新增</a-button>
-                        <a-button @click="searchMethod('response')">刷新</a-button>
-                      </a-space>
+                    <a-space style="margin-bottom: 16px;">
+                      <a-button @click="insertParamEvent('response')" :disabled="hasRootNode('response')">新增</a-button>
+                      <a-button @click="searchMethod('response')">刷新</a-button>
+                    </a-space>
 
-                      <vxe-table
-                          show-overflow
-                          keep-source
-                          ref="responseTableRef"
-                          :row-config="{keyField: 'id',drag: true}"
-                          :loading="loading"
-                          :tree-config="{transform: true, rowField: 'id', parentField: 'parentId', expandAll: true, defaultExpandAll: true}"
-                          :edit-rules=paramRules
-                          :valid-config="{ msgMode: 'full', theme: 'normal' }"
-                          :edit-config="{trigger: 'click', mode: 'row', showStatus: true}"
-                          :data="responseTableData">
-                        <vxe-column field="name" title="名称" drag-sort width="250" tree-node :edit-render="{}">
-                          <template #edit="{ row }" >
-                            <vxe-input v-model="row.name" mode="text" :disabled="disableName('response', row)"></vxe-input>
-                          </template>
-                        </vxe-column>
-                        <vxe-column field="type" title="类型" width="125" :edit-render="{}">
-                          <template #default="{ row }">
-                            <span>{{ row.type }}</span>
-                          </template>
-                          <template #edit="{ row }">
-                            <vxe-select v-model="row.type" transfer @change="onTypeChange('response', row, $event.value)">
-                              <vxe-option v-for="item in paramType" :key="item.value" :value="item.value" :label="item.label" :disabled="item.disabled"></vxe-option>
-                            </vxe-select>
-                          </template>
-                        </vxe-column>
-                        <vxe-column field="required" title="必填" width="100" :edit-render="{}">
-                          <template #default="{ row }">
-                            <span>{{ row.required ? '是' : '否' }}</span>
-                          </template>
-                          <template #edit="{ row }">
-                            <vxe-select v-model="row.required" transfer>
-                              <vxe-option v-for="item in required" :key="item.value" :value="item.value" :label="item.label" :disabled="item.disabled"></vxe-option>
-                            </vxe-select>
-                          </template>
-                        </vxe-column>
-                        <vxe-column field="example" title="示例值" width="150" :edit-render="{}">
-                          <template #edit="{ row }">
-                            <vxe-input v-model="row.example" mode="text"></vxe-input>
-                          </template>
-                        </vxe-column>
-                        <vxe-column field="description" title="描述" width="175" :edit-render="{}">
-                          <template #edit="{ row }">
-                            <vxe-input v-model="row.description" mode="text"></vxe-input>
-                          </template>
-                        </vxe-column>
-                        <vxe-column title="操作">
-                          <template #default="{ row }">
-                            <a-space>
-                              <a-button type="link" @click="insertNextRow('response', row, 'current')" :disabled="disableAddBrother('response', row)">添加相邻节点</a-button>
-                              <a-button type="link" @click="insertRow('response', row, 'bottom')" :disabled="disableAddChildren('response', row)">添加子节点</a-button>
-                              <a-button type="link" @click="removeRow('response', row)" danger>删除</a-button>
-                            </a-space>
-                          </template>
-                        </vxe-column>
-                      </vxe-table>
+                    <vxe-table
+                        show-overflow
+                        keep-source
+                        ref="responseTableRef"
+                        :row-config="{keyField: 'id',drag: true}"
+                        :loading="loading"
+                        :tree-config="{transform: true, rowField: 'id', parentField: 'parentId', expandAll: true, defaultExpandAll: true}"
+                        :edit-rules=paramRules
+                        :valid-config="{ msgMode: 'full', theme: 'normal' }"
+                        :edit-config="{trigger: 'click', mode: 'row', showStatus: true}"
+                        :data="responseTableData">
+                      <vxe-column field="name" title="名称" drag-sort width="250" tree-node :edit-render="{}">
+                        <template #edit="{ row }" >
+                          <vxe-input v-model="row.name" mode="text" :disabled="disableName('response', row)"></vxe-input>
+                        </template>
+                      </vxe-column>
+                      <vxe-column field="type" title="类型" width="125" :edit-render="{}">
+                        <template #default="{ row }">
+                          <span>{{ row.type }}</span>
+                        </template>
+                        <template #edit="{ row }">
+                          <vxe-select v-model="row.type" transfer @change="onTypeChange('response', row, $event.value)">
+                            <vxe-option v-for="item in paramType" :key="item.value" :value="item.value" :label="item.label" :disabled="item.disabled"></vxe-option>
+                          </vxe-select>
+                        </template>
+                      </vxe-column>
+                      <vxe-column field="required" title="必填" width="100" :edit-render="{}">
+                        <template #default="{ row }">
+                          <span>{{ row.required ? '是' : '否' }}</span>
+                        </template>
+                        <template #edit="{ row }">
+                          <vxe-select v-model="row.required" transfer>
+                            <vxe-option v-for="item in required" :key="item.value" :value="item.value" :label="item.label" :disabled="item.disabled"></vxe-option>
+                          </vxe-select>
+                        </template>
+                      </vxe-column>
+                      <vxe-column field="example" title="示例值" width="150" :edit-render="{}">
+                        <template #edit="{ row }">
+                          <vxe-input v-model="row.example" mode="text"></vxe-input>
+                        </template>
+                      </vxe-column>
+                      <vxe-column field="description" title="描述" width="175" :edit-render="{}">
+                        <template #edit="{ row }">
+                          <vxe-input v-model="row.description" mode="text"></vxe-input>
+                        </template>
+                      </vxe-column>
+                      <vxe-column title="操作">
+                        <template #default="{ row }">
+                          <a-button type="link" @click="insertNextRow('response', row, 'current')" :disabled="disableAddBrother('response', row)">添加相邻节点</a-button>
+                          <a-button type="link" @click="insertRow('response', row, 'bottom')" :disabled="disableAddChildren('response', row)">添加子节点</a-button>
+                          <a-button type="link" @click="removeRow('response', row)" danger>删除</a-button>
+                        </template>
+                      </vxe-column>
+                    </vxe-table>
 
                   </a-form-item>
                 </a-col>
@@ -442,24 +439,24 @@
 
     <!-- 创建/编辑弹窗 -->
     <a-modal
-      v-model:visible="modalVisible"
-      :title="modalType === 'create' ? '新增' : '编辑'"
-      @ok="handleModalOk"
-      @cancel="handleModalCancel"
-      okText="确定"
-      cancelText="取消"
+        v-model:visible="modalVisible"
+        :title="modalType === 'create' ? '新增' : '编辑'"
+        @ok="handleModalOk"
+        @cancel="handleModalCancel"
+        okText="确定"
+        cancelText="取消"
     >
       <a-form
-        ref="formRef"
-        :model="formState"
-        :rules="rules"
-        layout="vertical"
+          ref="formRef"
+          :model="formState"
+          :rules="rules"
+          layout="vertical"
       >
         <a-form-item label="类型" name="type">
-          <a-select 
-            v-model:value="formState.type" 
-            placeholder="请选择类型"
-            :disabled="modalType === 'edit'"
+          <a-select
+              v-model:value="formState.type"
+              placeholder="请选择类型"
+              :disabled="modalType === 'edit'"
           >
             <a-select-option :value="1">分类</a-select-option>
             <a-select-option :value="2">API</a-select-option>
@@ -470,18 +467,18 @@
         </a-form-item>
         <a-form-item label="父级" name="parentId">
           <a-tree-select
-            v-model:value="formState.parentId"
-            :tree-data="filteredTreeData"
-            placeholder="请选择父级"
-            :field-names="{ 
+              v-model:value="formState.parentId"
+              :tree-data="filteredTreeData"
+              placeholder="请选择父级"
+              :field-names="{
               label: 'title', 
               value: 'value', 
               children: 'children' 
             }"
-            :tree-default-expand-all="true"
-            allow-clear
-            :dropdown-style="{ maxHeight: '400px', overflow: 'auto' }"
-            style="width: 100%"
+              :tree-default-expand-all="true"
+              allow-clear
+              :dropdown-style="{ maxHeight: '400px', overflow: 'auto' }"
+              style="width: 100%"
           />
         </a-form-item>
       </a-form>
@@ -698,9 +695,9 @@ const getTableRefByParamType = (paramType: string) => {
   } else if (paramType == 'path') {
     $table = pathTableRef.value
   } else if (paramType == 'body') {
-     $table = bodyTableRef.value
+    $table = bodyTableRef.value
   } else {
-     $table = responseTableRef.value
+    $table = responseTableRef.value
   }
   return $table;
 }
@@ -747,12 +744,12 @@ const insertParamEvent = async (type: string) => {
       id: rid,
       parentId: null
     }
-    
+
     // 如果是响应参数，给根节点设置默认名称
     if (type === 'response') {
       record.name = ' '
     }
-    
+
     const { row: newRow } = await $table.insertAt(record, -1)
     await $table.setEditRow(newRow)
   }
@@ -961,8 +958,8 @@ const handleDelete = async (key: string) => {
       apiInfoCategoryId: Number(key)
     })
     if (response.data && response.data.code === 0) {
-    message.success('删除成功')
-    fetchTree()
+      message.success('删除成功')
+      fetchTree()
     } else {
       message.error(response.data.message || '删除失败')
     }
@@ -988,10 +985,10 @@ const handleModalOk = async () => {
         type: formState.type
       })
       if (response.data && response.data.code === 0) {
-      message.success('创建成功')
+        message.success('创建成功')
         modalVisible.value = false
         fetchTree()
-    } else {
+      } else {
         message.error(response.data.message || '创建失败')
       }
     } else {
@@ -1002,9 +999,9 @@ const handleModalOk = async () => {
         parentId: formState.parentId ? Number(formState.parentId) : 0
       })
       if (response.data && response.data.code === 0) {
-      message.success('更新成功')
-    modalVisible.value = false
-    fetchTree()
+        message.success('更新成功')
+        modalVisible.value = false
+        fetchTree()
       } else {
         message.error(response.data.message || '更新失败')
       }
@@ -1024,23 +1021,23 @@ const handleModalCancel = () => {
 const handleSave = async () => {
   // 先切换到所有标签页来加载数据
   const originalActiveKey = activeKey.value
-  
+
   // 切换到Query参数标签页
   activeKey.value = 'queryParam'
   await nextTick()
-  
+
   // 切换到Body参数标签页
   activeKey.value = 'bodyParam'
   await nextTick()
-  
+
   // 切换到Path参数标签页
   activeKey.value = 'pathParam'
   await nextTick()
-  
+
   // 切换到响应体标签页
   activeKey.value = 'responseBody'
   await nextTick()
-  
+
   // 恢复原来的标签页
   activeKey.value = originalActiveKey
   await nextTick()
@@ -1084,8 +1081,8 @@ const handleSave = async () => {
     // 调用保存API信息的接口
     const response = await axios.post('/apiInfo/save', submitData)
     if (response.data && response.data.code === 0) {
-    message.success('保存成功')
-    fetchTree()
+      message.success('保存成功')
+      fetchTree()
     } else {
       message.error(response.data.message || '保存失败')
     }
@@ -1108,8 +1105,8 @@ const handleBatchDelete = async (keys: string[]) => {
       apiInfoCategoryIdList: keys.map(key => Number(key))
     })
     if (response.data && response.data.code === 0) {
-    message.success('删除成功')
-    fetchTree()
+      message.success('删除成功')
+      fetchTree()
     } else {
       message.error(response.data.message || '删除失败')
     }
@@ -1127,8 +1124,8 @@ const handlePublish = async (keys: string[]) => {
       status: 2  // 发布状态为2
     })
     if (response.data && response.data.code === 0) {
-    message.success('发布成功')
-    fetchTree()
+      message.success('发布成功')
+      fetchTree()
     } else {
       message.error(response.data.message || '发布失败')
     }
@@ -1146,8 +1143,8 @@ const handleUnpublish = async (keys: string[]) => {
       status: 1  // 下架状态为1
     })
     if (response.data && response.data.code === 0) {
-    message.success('下架成功')
-    fetchTree()
+      message.success('下架成功')
+      fetchTree()
     } else {
       message.error(response.data.message || '下架失败')
     }
@@ -1199,9 +1196,9 @@ const filteredTreeData = computed(() => {
     // 如果有子节点，递归过滤
     if (node.children && node.children.length > 0) {
       const filteredChildren = node.children
-        .map((child: any) => filterNode(child))
-        .filter(Boolean)
-      
+          .map((child: any) => filterNode(child))
+          .filter(Boolean)
+
       return {
         ...node,
         children: filteredChildren
@@ -1212,8 +1209,8 @@ const filteredTreeData = computed(() => {
   }
 
   return treeData.value
-    .map(node => filterNode(node))
-    .filter(Boolean)
+      .map(node => filterNode(node))
+      .filter(Boolean)
 })
 
 onMounted(() => {
