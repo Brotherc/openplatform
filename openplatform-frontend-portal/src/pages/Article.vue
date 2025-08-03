@@ -36,12 +36,15 @@
                   <div class="api-params">
                     <h3>请求参数</h3>
                     <a-table 
-                      v-if="selectedNode.apiDetail.queryParam && selectedNode.apiDetail.queryParam.length"
+                      v-if="selectedNode.apiDetail.reqParamDisplayJson && selectedNode.apiDetail.reqParamDisplayJson.length"
                       :columns="requestColumns" 
-                      :data-source="selectedNode.apiDetail.queryParam" 
+                      :data-source="selectedNode.apiDetail.reqParamDisplayJson" 
                       :pagination="false"
                       size="small"
                       bordered
+                      :row-key="(record) => record.name"
+                      :children-column-name="'children'"
+                      :expanded-row-keys="expandedRowKeys"
                     />
                     <div v-else class="no-params">无请求参数</div>
                   </div>
@@ -56,6 +59,8 @@
                       size="small"
                       bordered
                       :row-key="(record) => record.name"
+                      :children-column-name="'children'"
+                      :expanded-row-keys="expandedRowKeys"
                     />
                     <div v-else class="no-response">无响应参数</div>
                   </div>
@@ -108,7 +113,7 @@ const requestColumns = [
     title: '参数名',
     dataIndex: 'name',
     key: 'name',
-    width: 200,
+    width: 300,
   },
   {
     title: '类型',
@@ -143,7 +148,7 @@ const responseColumns = [
     title: '参数名',
     dataIndex: 'name',
     key: 'name',
-    width: 200,
+    width: 300,
   },
   {
     title: '类型',
@@ -220,6 +225,7 @@ const articleHtml = ref('');
 const tocList = ref<{ id: string; title: string; level: number }[]>([]);
 const activeId = ref('');
 const mainContentRef = ref<HTMLElement | null>(null);
+const expandedRowKeys = ref<string[]>([]);
 
 // 新增：查找第一个 type 非1 节点
 function findFirstNonType1Node(nodes: any[]): any | null {
@@ -247,6 +253,21 @@ const fetchApiInfo = async (docCatalogId: string) => {
     params: { docCatalogId }
   });
   return res.data?.data || null;
+};
+
+// 递归获取所有可展开的行键
+const getAllExpandableKeys = (data: any[]): string[] => {
+  const keys: string[] = [];
+  const traverse = (items: any[]) => {
+    items.forEach(item => {
+      if (item.children && item.children.length > 0) {
+        keys.push(item.name);
+        traverse(item.children);
+      }
+    });
+  };
+  traverse(data);
+  return keys;
 };
 
 function generateId(text: string) {
@@ -289,6 +310,15 @@ watch(
       // 新增：获取API详情
       const apiInfo = await fetchApiInfo(node.key);
       node.apiDetail = apiInfo;
+      // 设置展开的行键
+      const allKeys: string[] = [];
+      if (apiInfo?.reqParamDisplayJson) {
+        allKeys.push(...getAllExpandableKeys(apiInfo.reqParamDisplayJson));
+      }
+      if (apiInfo?.returnInfoDisplayJson) {
+        allKeys.push(...getAllExpandableKeys(apiInfo.returnInfoDisplayJson));
+      }
+      expandedRowKeys.value = allKeys;
     }
   },
   { immediate: true }
