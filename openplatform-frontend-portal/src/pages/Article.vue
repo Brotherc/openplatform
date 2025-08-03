@@ -36,9 +36,8 @@
                   <div class="api-params">
                     <h3>请求参数</h3>
                     <a-table 
-                      v-if="selectedNode.apiDetail.reqParamDisplayJson && selectedNode.apiDetail.reqParamDisplayJson.length"
                       :columns="requestColumns" 
-                      :data-source="selectedNode.apiDetail.reqParamDisplayJson" 
+                      :data-source="selectedNode.apiDetail.reqParamDisplayJson || []" 
                       :pagination="false"
                       size="small"
                       bordered
@@ -46,15 +45,13 @@
                       :children-column-name="'children'"
                       :expanded-row-keys="expandedRowKeys"
                     />
-                    <div v-else class="no-params">无请求参数</div>
                   </div>
                   
                   <div class="api-response">
                     <h3>响应参数</h3>
                     <a-table 
-                      v-if="selectedNode.apiDetail.returnInfoDisplayJson && selectedNode.apiDetail.returnInfoDisplayJson.length"
                       :columns="responseColumns" 
-                      :data-source="selectedNode.apiDetail.returnInfoDisplayJson" 
+                      :data-source="selectedNode.apiDetail.returnInfoDisplayJson || []" 
                       :pagination="false"
                       size="small"
                       bordered
@@ -62,7 +59,6 @@
                       :children-column-name="'children'"
                       :expanded-row-keys="expandedRowKeys"
                     />
-                    <div v-else class="no-response">无响应参数</div>
                   </div>
                 </div>
                 <div v-else class="loading">加载中...</div>
@@ -312,10 +308,10 @@ watch(
       node.apiDetail = apiInfo;
       // 设置展开的行键
       const allKeys: string[] = [];
-      if (apiInfo?.reqParamDisplayJson) {
+      if (apiInfo?.reqParamDisplayJson && apiInfo.reqParamDisplayJson.length > 0) {
         allKeys.push(...getAllExpandableKeys(apiInfo.reqParamDisplayJson));
       }
-      if (apiInfo?.returnInfoDisplayJson) {
+      if (apiInfo?.returnInfoDisplayJson && apiInfo.returnInfoDisplayJson.length > 0) {
         allKeys.push(...getAllExpandableKeys(apiInfo.returnInfoDisplayJson));
       }
       expandedRowKeys.value = allKeys;
