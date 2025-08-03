@@ -57,7 +57,7 @@
                   <folder-outlined v-if="type === 1" style="margin-right: 8px" />
                   <api-outlined v-else style="margin-right: 8px" />
                   <span class="node-title" :title="title">{{ title }}</span>
-                  <a-tag v-if="type === 2" :color="dataRef.status === 2 ? 'success' : 'error'" style="margin-left: 8px">
+                  <a-tag v-if="type === 2" :color="dataRef.status === 2 ? 'success' : 'error'" style="margin-left: 8px; flex-shrink: 0;">
                     {{ dataRef.status === 2 ? '已发布' : '未发布' }}
                   </a-tag>
                   <div class="node-actions" @click.stop>
@@ -471,9 +471,9 @@
               :tree-data="filteredTreeData"
               placeholder="请选择父级"
               :field-names="{
-              label: 'title', 
-              value: 'value', 
-              children: 'children' 
+              label: 'title',
+              value: 'value',
+              children: 'children'
             }"
               :tree-default-expand-all="true"
               allow-clear
@@ -1236,7 +1236,7 @@ onMounted(() => {
   position: relative;
   z-index: 1;
   overflow: hidden;
-  min-width: 300px;
+  min-width: 350px;
   border-right: 1px solid #f0f0f0;
 }
 
@@ -1251,6 +1251,22 @@ onMounted(() => {
   flex: 1;
   overflow: auto;
   min-width: 0;
+  width: 100%;
+}
+
+.tree-content :deep(.ant-tree) {
+  width: 100%;
+  overflow: hidden;
+}
+
+.tree-content :deep(.ant-tree-node-content-wrapper) {
+  width: 100%;
+  overflow: hidden;
+}
+
+.tree-content :deep(.ant-tree-title) {
+  width: 100%;
+  overflow: hidden;
 }
 
 .api-detail {
@@ -1291,6 +1307,9 @@ onMounted(() => {
   display: flex;
   align-items: center;
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .node-title {
@@ -1298,11 +1317,14 @@ onMounted(() => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .node-actions {
   opacity: 0;
   transition: opacity 0.2s;
+  flex-shrink: 0;
 }
 
 .tree-node-content:hover .node-actions {
