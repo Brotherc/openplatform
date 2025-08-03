@@ -222,10 +222,12 @@ public class ApiInfoHelper {
 
             if (StringUtils.isNotBlank(apiInfo.getReturnInfo())) {
                 JsonNode returnInfo = objectMapper.readTree(apiInfo.getReturnInfo());
-                handleParam((ObjectNode) returnInfo);
-
                 ArrayNode responseBody = new ObjectMapper().createArrayNode();
-                responseBody.add(returnInfo);
+
+                if (!returnInfo.isEmpty()) {
+                    handleParam((ObjectNode) returnInfo);
+                    responseBody.add(returnInfo);
+                }
                 apiInfoDTO.setResponseBody(responseBody);
             }
 
