@@ -901,6 +901,22 @@ const fetchApiDetail = async (apiInfoCategoryId: string | number) => {
       pathTableData.value = flattenTreeWithId(detail.pathParam || [])
       bodyTableData.value = flattenTreeWithId(detail.requestBody || [])
       responseTableData.value = flattenTreeWithId(detail.responseBody || [])
+
+      // 手动展开所有节点
+      nextTick(() => {
+        if (tableRef.value) {
+          tableRef.value.setAllTreeExpand(true)
+        }
+        if (pathTableRef.value) {
+          pathTableRef.value.setAllTreeExpand(true)
+        }
+        if (bodyTableRef.value) {
+          bodyTableRef.value.setAllTreeExpand(true)
+        }
+        if (responseTableRef.value) {
+          responseTableRef.value.setAllTreeExpand(true)
+        }
+      })
     } else {
       // 没有数据时清空表单
       apiForm.name = ''
@@ -913,6 +929,22 @@ const fetchApiDetail = async (apiInfoCategoryId: string | number) => {
       pathTableData.value = []
       bodyTableData.value = []
       responseTableData.value = []
+
+      // 手动展开所有节点（即使没有数据也要重置展开状态）
+      nextTick(() => {
+        if (tableRef.value) {
+          tableRef.value.setAllTreeExpand(true)
+        }
+        if (pathTableRef.value) {
+          pathTableRef.value.setAllTreeExpand(true)
+        }
+        if (bodyTableRef.value) {
+          bodyTableRef.value.setAllTreeExpand(true)
+        }
+        if (responseTableRef.value) {
+          responseTableRef.value.setAllTreeExpand(true)
+        }
+      })
     }
   } catch (error) {
     message.error('获取API详情失败')
