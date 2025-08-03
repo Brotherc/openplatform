@@ -6,10 +6,10 @@
         <div class="tree-header">
           <a-space>
             <a-select
-              v-model:value="selectedGroup"
-              style="width: 200px"
-              placeholder="请选择分组"
-              @change="handleGroupChange"
+                v-model:value="selectedGroup"
+                style="width: 200px"
+                placeholder="请选择分组"
+                @change="handleGroupChange"
             >
               <a-select-option v-for="group in groups" :key="group.id" :value="group.id">
                 {{ group.name }}
@@ -35,10 +35,10 @@
                   </a-menu-item>
                   <a-menu-item :disabled="checkedKeys.length === 0">
                     <a-popconfirm
-                      title="确定要删除选中的节点吗？"
-                      ok-text="确定"
-                      cancel-text="取消"
-                      @confirm="() => handleDelete(checkedKeys)"
+                        title="确定要删除选中的节点吗？"
+                        ok-text="确定"
+                        cancel-text="取消"
+                        @confirm="() => handleDelete(checkedKeys)"
                     >
                       <span>
                         <delete-outlined />
@@ -53,15 +53,15 @@
         </div>
         <div class="tree-content">
           <a-tree
-            v-model:selectedKeys="selectedKeys"
-            v-model:checkedKeys="checkedKeys"
-            v-model:expandedKeys="expandedKeys"
-            :tree-data="treeData"
-            :checkable="true"
-            :block-node="true"
-            :show-title="true"
-            @select="onSelect"
-            @check="onCheck"
+              v-model:selectedKeys="selectedKeys"
+              v-model:checkedKeys="checkedKeys"
+              v-model:expandedKeys="expandedKeys"
+              :tree-data="treeData"
+              :checkable="true"
+              :block-node="true"
+              :show-title="true"
+              @select="onSelect"
+              @check="onCheck"
           >
             <template #title="{ title, type, status, dataRef }">
               <div class="tree-node-content">
@@ -101,11 +101,11 @@
                           下架
                         </a-menu-item>
                         <a-popconfirm
-                          v-model:visible="deleteConfirmVisible"
-                          title="确定要删除这个节点吗？"
-                          ok-text="确定"
-                          cancel-text="取消"
-                          @confirm="() => {
+                            v-model:visible="deleteConfirmVisible"
+                            title="确定要删除这个节点吗？"
+                            ok-text="确定"
+                            cancel-text="取消"
+                            @confirm="() => {
                             handleSingleDelete(dataRef.key);
                             selectedKeys.value = [];
                             selectedArticle.value = null;
@@ -140,7 +140,7 @@
           <MdEditor v-model="selectedArticle.content" style="height: 100%; flex: 1; width: 100%;" />
         </div>
       </div>
-      
+
       <div class="api-detail-container" v-else-if="apiDetail">
         <div class="api-title">
           <span class="api-title-main">{{ apiDetail.name }}</span>
@@ -151,14 +151,18 @@
         <div class="api-section">
           <div class="api-section-title">请求参数</div>
           <a-table
-            :columns="paramColumns"
-            :data-source="apiDetail.reqParamDisplayJson"
-            :pagination="false"
-            :show-header="true"
-            :bordered="false"
-            size="middle"
-            :row-key="record => record.name"
-            :expandable="{ childrenColumnName: 'children' }"
+              ref="reqParamTableRef"
+              :columns="paramColumns"
+              :data-source="apiDetail.reqParamDisplayJson"
+              :pagination="false"
+              :show-header="true"
+              :bordered="false"
+              size="middle"
+              :row-key="record => record.name"
+              :expandable="{
+              childrenColumnName: 'children'
+            }"
+              :expandedRowKeys="reqParamExpandedKeys"
           >
             <template #bodyCell="{ column, record }">
               <template v-if="column.key === 'required'">
@@ -171,14 +175,18 @@
         <div class="api-section">
           <div class="api-section-title">响应参数</div>
           <a-table
-            :columns="paramColumns"
-            :data-source="apiDetail.returnInfoDisplayJson"
-            :pagination="false"
-            :show-header="true"
-            :bordered="false"
-            size="middle"
-            :row-key="record => record.name"
-            :expandable="{ childrenColumnName: 'children' }"
+              ref="resParamTableRef"
+              :columns="paramColumns"
+              :data-source="apiDetail.returnInfoDisplayJson"
+              :pagination="false"
+              :show-header="true"
+              :bordered="false"
+              size="middle"
+              :row-key="record => record.name"
+              :expandable="{
+              childrenColumnName: 'children'
+            }"
+              :expandedRowKeys="resParamExpandedKeys"
           >
             <template #bodyCell="{ column, record }">
               <template v-if="column.key === 'required'">
@@ -188,7 +196,7 @@
           </a-table>
         </div>
       </div>
-      
+
       <div class="empty-container" v-else>
         <a-empty description="请选择或创建一篇文章" />
       </div>
@@ -197,18 +205,18 @@
 
   <!-- 创建/编辑弹窗 -->
   <a-modal
-    v-model:visible="modalVisible"
-    :title="modalType === 'create' ? '新建' : '编辑'"
-    @ok="handleModalOk"
-    @cancel="handleModalCancel"
-    okText="确定"
-    cancelText="取消"
+      v-model:visible="modalVisible"
+      :title="modalType === 'create' ? '新建' : '编辑'"
+      @ok="handleModalOk"
+      @cancel="handleModalCancel"
+      okText="确定"
+      cancelText="取消"
   >
     <a-form
-      ref="formRef"
-      :model="formState"
-      :rules="rules"
-      layout="vertical"
+        ref="formRef"
+        :model="formState"
+        :rules="rules"
+        layout="vertical"
     >
       <a-form-item label="类型" name="type">
         <a-radio-group v-model:value="formState.type" :disabled="modalType === 'edit'">
@@ -219,27 +227,27 @@
       </a-form-item>
       <a-form-item label="父级节点" name="parentId">
         <a-tree-select
-          v-model:value="formState.parentId"
-          style="width: 100%"
-          :dropdown-style="{ maxHeight: '400px', overflow: 'auto' }"
-          :tree-data="treeData"
-          placeholder="请选择父级节点"
-          :field-names="{ label: 'title', value: 'key', children: 'children' }"
-          :tree-default-expand-all="true"
-          allowClear
+            v-model:value="formState.parentId"
+            style="width: 100%"
+            :dropdown-style="{ maxHeight: '400px', overflow: 'auto' }"
+            :tree-data="treeData"
+            placeholder="请选择父级节点"
+            :field-names="{ label: 'title', value: 'key', children: 'children' }"
+            :tree-default-expand-all="true"
+            allowClear
         />
       </a-form-item>
       <a-form-item v-if="formState.type === 3" label="关联API节点" name="apiInfoCategoryId">
         <a-tree-select
-          v-model:value="formState.apiInfoCategoryId"
-          style="width: 100%"
-          :dropdown-style="{ maxHeight: '400px', overflow: 'auto' }"
-          :tree-data="apiTreeData"
-          placeholder="请选择API节点"
-          :field-names="{ label: 'title', value: 'key', children: 'children' }"
-          :tree-default-expand-all="true"
-          :loading="apiTreeLoading"
-          allowClear
+            v-model:value="formState.apiInfoCategoryId"
+            style="width: 100%"
+            :dropdown-style="{ maxHeight: '400px', overflow: 'auto' }"
+            :tree-data="apiTreeData"
+            placeholder="请选择API节点"
+            :field-names="{ label: 'title', value: 'key', children: 'children' }"
+            :tree-default-expand-all="true"
+            :loading="apiTreeLoading"
+            allowClear
         />
       </a-form-item>
       <a-form-item label="标题" name="title">
@@ -247,9 +255,9 @@
       </a-form-item>
       <a-form-item label="排序" name="sort">
         <a-input-number
-          v-model:value="formState.sort"
-          :min="0"
-          placeholder="请输入排序号"
+            v-model:value="formState.sort"
+            :min="0"
+            placeholder="请输入排序号"
         />
       </a-form-item>
     </a-form>
@@ -321,6 +329,25 @@ const apiTreeLoading = ref(false)
 const apiDetail = ref(null)
 const apiDetailLoading = ref(false)
 const currentApiDocCatalogId = ref<string | null>(null)
+const reqParamTableRef = ref()
+const resParamTableRef = ref()
+const reqParamExpandedKeys = ref<string[]>([])
+const resParamExpandedKeys = ref<string[]>([])
+
+// 获取所有展开键的函数
+const getAllExpandedKeys = (data: any[]): string[] => {
+  const keys: string[] = []
+  const traverse = (items: any[]) => {
+    items.forEach(item => {
+      if (item.children && item.children.length > 0) {
+        keys.push(item.name)
+        traverse(item.children)
+      }
+    })
+  }
+  traverse(data)
+  return keys
+}
 
 // 获取API详情
 const fetchApiDetail = async (docCatalogId: string) => {
@@ -332,6 +359,19 @@ const fetchApiDetail = async (docCatalogId: string) => {
     })
     if (response.data && response.data.code === 0 && response.data.data) {
       apiDetail.value = response.data.data
+
+      // 手动触发展开所有节点
+      nextTick(() => {
+        // 对于Ant Design表格，通过设置expandedRowKeys来展开所有行
+        if (apiDetail.value?.reqParamDisplayJson) {
+          const reqParamKeys = getAllExpandedKeys(apiDetail.value.reqParamDisplayJson)
+          reqParamExpandedKeys.value = reqParamKeys
+        }
+        if (apiDetail.value?.returnInfoDisplayJson) {
+          const resParamKeys = getAllExpandedKeys(apiDetail.value.returnInfoDisplayJson)
+          resParamExpandedKeys.value = resParamKeys
+        }
+      })
     } else {
       apiDetail.value = null
       message.error(response.data.message || '获取API详情失败')
@@ -347,7 +387,7 @@ const fetchApiDetail = async (docCatalogId: string) => {
 
 // 参数表格列定义
 const paramColumns = [
-  { title: '参数名', dataIndex: 'name', key: 'name', width: 180 },
+  { title: '参数名', dataIndex: 'name', key: 'name', width: 280 },
   { title: '类型', dataIndex: 'type', key: 'type', width: 120 },
   { title: '是否必填', dataIndex: 'required', key: 'required', width: 100 },
   { title: '示例值', dataIndex: 'example', key: 'example', width: 120 },
@@ -375,7 +415,7 @@ const rules = {
 const fetchGroups = async () => {
   try {
     const response = await axios.get('http://127.0.0.1:8080/docCatalogGroup/getList')
-    
+
     if (response.data.code === 0) {
       groups.value = response.data.data.map(item => ({
         id: item.docCatalogGroupId,
@@ -403,7 +443,7 @@ const fetchDocTree = async () => {
         docCatalogGroupId: selectedGroup.value
       }
     })
-    
+
     if (response.data.code === 0) {
       treeData.value = response.data.data
       // 默认展开第一个节点及其子节点
@@ -426,8 +466,8 @@ const fetchDocTree = async () => {
       }
       // 检查右侧详情是否还在树中
       if (
-        currentApiDocCatalogId.value &&
-        !findNodeInTree(treeData.value, currentApiDocCatalogId.value)
+          currentApiDocCatalogId.value &&
+          !findNodeInTree(treeData.value, currentApiDocCatalogId.value)
       ) {
         apiDetail.value = null
         currentApiDocCatalogId.value = null
@@ -537,7 +577,7 @@ const onSelect = async (selectedKeys: string[], info: any) => {
           id: node.dataRef.key
         }
       })
-      
+
       if (response.data.code === 0) {
         selectedArticle.value = {
           id: node.dataRef.key,
@@ -595,7 +635,7 @@ const handleEdit = async (node: any) => {
     console.error('No node data provided');
     return;
   }
-  
+
   modalType.value = 'edit';
   formState.docCatalogId = node.key;  // 设置主键
   formState.title = node.title;
@@ -657,7 +697,7 @@ const handleSingleDelete = async (key: string) => {
     const response = await axios.post('http://127.0.0.1:8080/docCatalog/deleteById', {
       docCatalogId: key
     })
-    
+
     if (response.data.code === 0) {
       message.success('删除成功')
       fetchDocTree()
@@ -693,7 +733,7 @@ const handleSave = async () => {
       docCatalogId: selectedArticle.value.id,
       content: selectedArticle.value.content
     })
-    
+
     if (response.data.code === 0) {
       message.success('保存成功')
     } else {
@@ -724,7 +764,7 @@ const handleModalOk = async () => {
         sort: formState.sort,
         apiInfoCategoryId: formState.apiInfoCategoryId
       })
-      
+
       if (response.data.code === 0) {
         message.success('创建成功')
         modalVisible.value = false
@@ -741,7 +781,7 @@ const handleModalOk = async () => {
         sort: formState.sort,
         apiInfoCategoryId: formState.apiInfoCategoryId
       })
-      
+
       if (response.data.code === 0) {
         message.success('更新成功')
         modalVisible.value = false
@@ -780,7 +820,7 @@ const handlePublish = async (keys: string[]) => {
       docCatalogIdList: keys,
       status: 2
     })
-    
+
     if (response.data.code === 0) {
       message.success('发布成功')
       fetchDocTree()
@@ -804,7 +844,7 @@ const handleUnpublish = async (keys: string[]) => {
       docCatalogIdList: keys,
       status: 1
     })
-    
+
     if (response.data.code === 0) {
       message.success('下架成功')
       fetchDocTree()
