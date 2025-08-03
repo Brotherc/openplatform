@@ -164,7 +164,7 @@ public class ApiInfoHelper {
                 JsonNode children = param.get(ApiInfoCategoryConstant.CHILDREN);
                 param.remove(ApiInfoCategoryConstant.CHILDREN);
                 param.set(ApiInfoCategoryConstant.ITEMS, children.get(0));
-                ((ObjectNode) (children.get(0))).put("name", "");
+                ((ObjectNode) (children.get(0))).put(ApiInfoCategoryConstant.NAME, "");
 
                 handleParam((ObjectNode) (children.get(0)), type);
             } else if ("object".equals(paramType) || "refObject".equals(paramType)) {
@@ -225,7 +225,13 @@ public class ApiInfoHelper {
                 ArrayNode responseBody = new ObjectMapper().createArrayNode();
 
                 if (!returnInfo.isEmpty()) {
-                    handleParam((ObjectNode) returnInfo);
+                    ObjectNode returnInfoNode = (ObjectNode) returnInfo;
+
+                    if (returnInfoNode.get(ApiInfoCategoryConstant.NAME).isNull()) {
+                        returnInfoNode.put(ApiInfoCategoryConstant.NAME, " ");
+                    }
+
+                    handleParam(returnInfoNode);
                     responseBody.add(returnInfo);
                 }
                 apiInfoDTO.setResponseBody(responseBody);
@@ -255,7 +261,7 @@ public class ApiInfoHelper {
             ArrayNode children = objectMapper.createArrayNode();
             children.add(items);
             param.set(ApiInfoCategoryConstant.CHILDREN, children);
-            ((ObjectNode) (items)).put("name", ApiInfoCategoryConstant.ITEMS);
+            ((ObjectNode) (items)).put(ApiInfoCategoryConstant.NAME, ApiInfoCategoryConstant.ITEMS);
             boolean required = Optional.ofNullable(param.get(ApiInfoCategoryConstant.REQUIRED)).map(JsonNode::asBoolean).orElse(false);
             if (items.get(ApiInfoCategoryConstant.REQUIRED).isNull()) {
                 ((ObjectNode) (items)).put(ApiInfoCategoryConstant.REQUIRED, required);
