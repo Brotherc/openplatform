@@ -78,6 +78,7 @@
 ![文章管理-文章](https://github.com/Brotherc/openplatform/blob/main/doc/manager/doc.png)  
 ![文章管理-API](https://github.com/Brotherc/openplatform/blob/main/doc/manager/doc_api.png)  
 ![API](https://github.com/Brotherc/openplatform/blob/main/doc/manager/api.png)
+![菜单](https://github.com/Brotherc/openplatform/blob/main/doc/manager/menu.png)
 ## 门户端
 ![首页](https://github.com/Brotherc/openplatform/blob/main/doc/portal/home.png)  
 ![文章](https://github.com/Brotherc/openplatform/blob/main/doc/portal/doc.png)  
