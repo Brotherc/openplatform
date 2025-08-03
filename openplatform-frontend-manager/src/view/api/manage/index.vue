@@ -1251,7 +1251,7 @@ onMounted(() => {
 
 <style scoped>
 .api-manage {
-  height: 100%;
+  height: 100vh;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -1259,9 +1259,9 @@ onMounted(() => {
 
 .tree-container {
   background: #fff;
-  padding: 24px 16px 16px 16px;
+  padding: 24px 0px 16px 16px;
   border-radius: 2px;
-  height: 100%;
+  height: calc(100vh - 48px);
   display: flex;
   flex-direction: column;
   position: relative;
@@ -1280,9 +1280,11 @@ onMounted(() => {
 
 .tree-content {
   flex: 1;
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
   min-width: 0;
   width: 100%;
+  max-height: calc(100vh - 120px);
 }
 
 .tree-content :deep(.ant-tree) {
@@ -1304,7 +1306,7 @@ onMounted(() => {
   background: #fff;
   padding: 24px 0 16px 16px;
   border-radius: 2px;
-  height: 100%;
+  height: calc(100vh - 48px);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -1320,8 +1322,10 @@ onMounted(() => {
 
 .detail-content {
   flex: 1;
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
   min-width: 0;
+  max-height: calc(100vh - 120px);
 }
 
 .empty-container {
