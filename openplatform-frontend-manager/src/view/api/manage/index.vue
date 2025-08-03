@@ -367,7 +367,7 @@
                   <a-form-item label="响应参数">
 
                       <a-space style="margin-bottom: 16px;">
-                        <a-button @click="insertParamEvent('response')">新增</a-button>
+                        <a-button @click="insertParamEvent('response')" :disabled="hasRootNode('response')">新增</a-button>
                         <a-button @click="searchMethod('response')">刷新</a-button>
                       </a-space>
 
@@ -728,6 +728,15 @@ const removeRow = async (type: string, row: RowVO) => {
   if ($table) {
     await $table.remove(row)
   }
+}
+
+const hasRootNode = (type: string): boolean => {
+  const $table = getTableRefByParamType(type)
+  if ($table) {
+    const data = $table.getTableData().fullData
+    return data.some((row: any) => row.parentId === null)
+  }
+  return false
 }
 
 const insertParamEvent = async (type: string) => {
