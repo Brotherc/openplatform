@@ -3,11 +3,11 @@
     <a-layout-sider v-model:collapsed="collapsed" :trigger="null" collapsible>
       <div class="logo">开放平台</div>
       <a-menu
-        v-model:selectedKeys="selectedKeys"
-        v-model:openKeys="openKeys"
-        theme="dark"
-        mode="inline"
-        @click="handleMenuClick"
+          v-model:selectedKeys="selectedKeys"
+          v-model:openKeys="openKeys"
+          theme="dark"
+          mode="inline"
+          @click="handleMenuClick"
       >
         <a-sub-menu key="doc-center">
           <template #title>
@@ -49,6 +49,18 @@
             <span>菜单管理</span>
           </a-menu-item>
         </a-sub-menu>
+        <a-sub-menu key="basic-setting">
+          <template #title>
+            <span>
+              <setting-outlined />
+              <span>基础设置</span>
+            </span>
+          </template>
+          <a-menu-item key="user-manage">
+            <user-outlined />
+            <span>用户管理</span>
+          </a-menu-item>
+        </a-sub-menu>
       </a-menu>
     </a-layout-sider>
     <a-layout>
@@ -65,9 +77,9 @@
       >
         <router-view />
       </a-layout-content>
-<!--      <a-layout-footer style="text-align: center">-->
-<!--        Ant Design ©2018 Created by Ant UED-->
-<!--      </a-layout-footer>-->
+      <!--      <a-layout-footer style="text-align: center">-->
+      <!--        Ant Design ©2018 Created by Ant UED-->
+      <!--      </a-layout-footer>-->
     </a-layout>
   </a-layout>
 </template>
@@ -85,14 +97,16 @@ import {
   ApiOutlined,
   CodeOutlined,
   AppstoreOutlined,
-  MenuOutlined
+  MenuOutlined,
+  SettingOutlined,
+  UserOutlined
 } from '@ant-design/icons-vue'
 import type { MenuClickEventHandler } from 'ant-design-vue/es/menu/src/interface'
 
 const router = useRouter()
 const collapsed = ref(false)
 const selectedKeys = ref<string[]>([])
-const openKeys = ref(['doc-center'])
+const openKeys = ref(['doc-center', 'api-center', 'portal-center', 'basic-setting'])
 
 // 根据当前路由设置选中的菜单项
 const setSelectedKeysFromRoute = () => {
@@ -103,6 +117,8 @@ const setSelectedKeysFromRoute = () => {
     selectedKeys.value = ['group']
   } else if (path.includes('/home/menu-manage')) {
     selectedKeys.value = ['menu-manage']
+  } else if (path.includes('/home/user-manage')) {
+    selectedKeys.value = ['user-manage']
   }
 }
 
