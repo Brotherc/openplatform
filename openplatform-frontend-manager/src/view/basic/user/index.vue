@@ -1,64 +1,64 @@
 <template>
   <div class="user-manage">
-      <div class="header">
-    <div class="header-content">
-      <a-button type="primary" @click="showAddModal">
-        <plus-outlined />
-        新建用户
-      </a-button>
-      
-      <div class="search-form">
-        <a-form layout="inline" :model="searchForm">
-          <a-form-item label="用户名">
-            <a-input
-              v-model:value="searchForm.username"
-              placeholder="请输入用户名"
-              allow-clear
-              style="width: 200px"
-            />
-          </a-form-item>
-          <a-form-item label="昵称">
-            <a-input
-              v-model:value="searchForm.nickname"
-              placeholder="请输入昵称"
-              allow-clear
-              style="width: 200px"
-            />
-          </a-form-item>
-          <a-form-item label="状态">
-            <a-select
-              v-model:value="searchForm.status"
-              placeholder="请选择状态"
-              allow-clear
-              style="width: 120px"
-            >
-              <a-select-option :value="1">禁用</a-select-option>
-              <a-select-option :value="2">启用</a-select-option>
-            </a-select>
-          </a-form-item>
-          <a-form-item>
-            <a-button type="primary" @click="handleSearch">
-              <search-outlined />
-              查询
-            </a-button>
-            <a-button style="margin-left: 8px" @click="handleReset">
-              <reload-outlined />
-              重置
-            </a-button>
-          </a-form-item>
-        </a-form>
+    <div class="header">
+      <div class="header-content">
+        <a-button type="primary" @click="showAddModal">
+          <plus-outlined />
+          新建用户
+        </a-button>
+
+        <div class="search-form">
+          <a-form layout="inline" :model="searchForm">
+            <a-form-item label="用户名">
+              <a-input
+                  v-model:value="searchForm.username"
+                  placeholder="请输入用户名"
+                  allow-clear
+                  style="width: 200px"
+              />
+            </a-form-item>
+            <a-form-item label="昵称">
+              <a-input
+                  v-model:value="searchForm.nickname"
+                  placeholder="请输入昵称"
+                  allow-clear
+                  style="width: 200px"
+              />
+            </a-form-item>
+            <a-form-item label="状态">
+              <a-select
+                  v-model:value="searchForm.status"
+                  placeholder="请选择状态"
+                  allow-clear
+                  style="width: 120px"
+              >
+                <a-select-option :value="1">禁用</a-select-option>
+                <a-select-option :value="2">启用</a-select-option>
+              </a-select>
+            </a-form-item>
+            <a-form-item>
+              <a-button type="primary" @click="handleSearch">
+                <search-outlined />
+                查询
+              </a-button>
+              <a-button style="margin-left: 8px" @click="handleReset">
+                <reload-outlined />
+                重置
+              </a-button>
+            </a-form-item>
+          </a-form>
+        </div>
       </div>
     </div>
-  </div>
 
     <div class="table-container">
       <a-table
-        :columns="columns"
-        :data-source="userList"
-        :pagination="pagination"
-        :loading="loading"
-        row-key="userId"
-        @change="handleTableChange"
+          :columns="columns"
+          :data-source="userList"
+          :pagination="pagination"
+          :loading="loading"
+          row-key="userId"
+          @change="handleTableChange"
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'status'">
@@ -85,44 +85,44 @@
 
     <!-- 新增/编辑用户弹窗 -->
     <a-modal
-      v-model:open="modalVisible"
-      :title="modalType === 'create' ? '新建用户' : '编辑用户'"
-      :confirm-loading="submitLoading"
-      @ok="handleSubmit"
-      @cancel="handleCancel"
-      ok-text="确定"
-      cancel-text="取消"
+        v-model:open="modalVisible"
+        :title="modalType === 'create' ? '新建用户' : '编辑用户'"
+        :confirm-loading="submitLoading"
+        @ok="handleSubmit"
+        @cancel="handleCancel"
+        ok-text="确定"
+        cancel-text="取消"
     >
       <a-form
-        ref="formRef"
-        :model="formData"
-        :rules="rules"
-        :label-col="{ span: 6 }"
-        :wrapper-col="{ span: 18 }"
+          ref="formRef"
+          :model="formData"
+          :rules="rules"
+          :label-col="{ span: 24 }"
+          :wrapper-col="{ span: 24 }"
       >
         <a-form-item label="用户名" name="username" v-if="modalType === 'create'">
           <a-input
-            v-model:value="formData.username"
-            placeholder="请输入用户名"
-            :disabled="modalType === 'edit'"
+              v-model:value="formData.username"
+              placeholder="请输入用户名"
+              :disabled="modalType === 'edit'"
           />
         </a-form-item>
         <a-form-item label="密码" name="password">
           <a-input-password
-            v-model:value="formData.password"
-            placeholder="请输入密码"
+              v-model:value="formData.password"
+              placeholder="请输入密码"
           />
         </a-form-item>
         <a-form-item label="昵称" name="nickname">
           <a-input
-            v-model:value="formData.nickname"
-            placeholder="请输入昵称"
+              v-model:value="formData.nickname"
+              placeholder="请输入昵称"
           />
         </a-form-item>
         <a-form-item label="状态" name="status">
           <a-select
-            v-model:value="formData.status"
-            placeholder="请选择状态"
+              v-model:value="formData.status"
+              placeholder="请选择状态"
           >
             <a-select-option :value="1">禁用</a-select-option>
             <a-select-option :value="2">启用</a-select-option>
@@ -269,9 +269,9 @@ const fetchUserList = async () => {
       size: pagination.pageSize,
       ...searchForm
     }
-    
+
     const response = await axios.get('/user/page', { params })
-    
+
     if (response.data && response.data.code === 0) {
       userList.value = response.data.data.content || []
       pagination.total = response.data.data.totalElements || 0
@@ -342,7 +342,7 @@ const handleSubmit = async () => {
   try {
     await formRef.value?.validate()
     submitLoading.value = true
-    
+
     if (modalType.value === 'create') {
       // 新增用户
       const requestData: any = {
@@ -350,14 +350,14 @@ const handleSubmit = async () => {
         password: formData.password,
         status: formData.status
       }
-      
+
       // 只有当昵称有值时才传递
       if (formData.nickname && formData.nickname.trim()) {
         requestData.nickname = formData.nickname.trim()
       }
-      
+
       const response = await axios.post('/user/add', requestData)
-      
+
       if (response.data && response.data.code === 0) {
         message.success('创建用户成功')
         modalVisible.value = false
@@ -371,19 +371,19 @@ const handleSubmit = async () => {
         userId: formData.userId,
         status: formData.status
       }
-      
+
       // 只有当昵称有值时才传递
       if (formData.nickname && formData.nickname.trim()) {
         requestData.nickname = formData.nickname.trim()
       }
-      
+
       // 只有当密码有值时才传递
       if (formData.password && formData.password.trim()) {
         requestData.password = formData.password.trim()
       }
-      
+
       const response = await axios.post('/user/updateById', requestData)
-      
+
       if (response.data && response.data.code === 0) {
         message.success('更新用户成功')
         modalVisible.value = false
@@ -413,17 +413,17 @@ const handleCancel = () => {
 // 格式化日期时间
 const formatDateTime = (timestamp: string | number | undefined): string => {
   if (!timestamp) return '-'
-  
+
   const date = new Date(timestamp)
   if (isNaN(date.getTime())) return '-'
-  
+
   const year = date.getFullYear()
   const month = String(date.getMonth() + 1).padStart(2, '0')
   const day = String(date.getDate()).padStart(2, '0')
   const hours = String(date.getHours()).padStart(2, '0')
   const minutes = String(date.getMinutes()).padStart(2, '0')
   const seconds = String(date.getSeconds()).padStart(2, '0')
-  
+
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
 }
 
@@ -439,7 +439,7 @@ const handleDelete = (record: User) => {
         const response = await axios.post('/user/deleteById', {
           userId: record.userId
         })
-        
+
         if (response.data && response.data.code === 0) {
           message.success('删除用户成功')
           fetchUserList()
