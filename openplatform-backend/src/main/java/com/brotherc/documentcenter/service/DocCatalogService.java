@@ -192,7 +192,6 @@ public class DocCatalogService {
                                                             newApi.setUpdateBy(DefaultConstant.DEFAULT_UPDATE_BY);
                                                             newApi.setCreateTime(LocalDateTime.now());
                                                             newApi.setUpdateTime(LocalDateTime.now());
-                                                            newApi.setIsDel(0);
                                                             return docCatalogApiRepository.save(newApi);
                                                         }))
                                                         .thenReturn(saved);

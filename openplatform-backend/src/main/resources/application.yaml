@@ -17,3 +17,7 @@ logging:
 
 es:
   url: http://localhost:9200
+
+# 密码加密配置
+password:
+  salt: "openplatform2025!@#$%"

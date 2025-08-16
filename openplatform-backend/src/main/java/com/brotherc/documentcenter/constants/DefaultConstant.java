@@ -13,5 +13,6 @@ public class DefaultConstant {
 
     public static final String UPDATE_BY = "updateBy";
 
+    public static final String IS_DEL = "isDel";
 
 }
