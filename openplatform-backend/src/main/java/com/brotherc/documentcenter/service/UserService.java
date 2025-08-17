@@ -1,5 +1,8 @@
 package com.brotherc.documentcenter.service;
 
+import cn.dev33.satoken.reactor.context.SaReactorHolder;
+import cn.dev33.satoken.stp.SaTokenInfo;
+import cn.dev33.satoken.stp.StpUtil;
 import com.brotherc.documentcenter.constants.DefaultConstant;
 import com.brotherc.documentcenter.constants.UserConstant;
 import com.brotherc.documentcenter.dao.UserRepository;
@@ -107,7 +110,8 @@ public class UserService {
                     UserDTO userDTO = new UserDTO();
                     BeanUtils.copyProperties(user, userDTO);
                     return userDTO;
-                });
+                })
+                .switchIfEmpty(Mono.error(new BusinessException(ExceptionEnum.SYS_USER_UN_EXISTS)));
     }
 
     public Mono<Page<UserDTO>> page(UserQueryDTO userQueryDTO, Pageable pageable) {
@@ -142,17 +146,23 @@ public class UserService {
                 .map(p -> new PageImpl<>(p.getT1(), pageable, p.getT2()));
     }
 
-    public Mono<UserDTO> login(UserLoginDTO userLoginDTO) {
+    public Mono<UserTokenDTO> login(UserLoginDTO userLoginDTO) {
         return userRepository.findByUsernameAndIsDel(userLoginDTO.getUsername(), 0)
                 .filter(user -> {
                     // 验证密码
                     return passwordUtil.verifyPassword(userLoginDTO.getPassword(), user.getPassword());
                 })
                 .map(user -> {
-                    UserDTO userDTO = new UserDTO();
+                    UserTokenDTO userDTO = new UserTokenDTO();
                     BeanUtils.copyProperties(user, userDTO);
                     return userDTO;
                 })
+                .flatMap(userDTO -> SaReactorHolder.sync(() -> {
+                    StpUtil.login(userDTO.getUserId());
+                    SaTokenInfo tokenInfo = StpUtil.getTokenInfo();
+                    userDTO.setToken(tokenInfo.getTokenValue());
+                    return userDTO;
+                }))
                 .switchIfEmpty(Mono.error(new BusinessException(ExceptionEnum.LOGIN_USERNAME_PASSWORD_ERROR)));
     }
 

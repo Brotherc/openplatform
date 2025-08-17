@@ -33,14 +33,14 @@ public class GlobalWebExceptionHandler implements ErrorWebExceptionHandler {
     @Override
     public Mono<Void> handle(@NonNull ServerWebExchange exchange, @NonNull Throwable ex) {
         ResponseDTO<Void> responseDTO;
-        if (ex instanceof BusinessException) {
-            responseDTO = handleBusinessException((BusinessException) ex);
-        } else if (ex instanceof WebExchangeBindException) {
-            responseDTO = handleWebExchangeBindException((WebExchangeBindException) ex);
-        } else if (ex instanceof ConstraintViolationException) {
-            responseDTO = handleConstraintViolationException((ConstraintViolationException) ex);
-        } else if (ex instanceof Exception) {
-            responseDTO = handleException((Exception) ex);
+        if (ex instanceof BusinessException businessException) {
+            responseDTO = handleBusinessException(businessException);
+        } else if (ex instanceof WebExchangeBindException webExchangeBindException) {
+            responseDTO = handleWebExchangeBindException(webExchangeBindException);
+        } else if (ex instanceof ConstraintViolationException constraintViolationException) {
+            responseDTO = handleConstraintViolationException(constraintViolationException);
+        } else if (ex instanceof Exception exception) {
+            responseDTO = handleException(exception);
         } else {
             responseDTO = ResponseDTO.fail(ExceptionEnum.SYS_ERROR.getCode(), ExceptionEnum.SYS_ERROR.getMsg(), null);
         }

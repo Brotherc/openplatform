@@ -1,10 +1,10 @@
 package com.brotherc.documentcenter.model.dto.common;
 
+import com.google.gson.Gson;
 import lombok.*;
 
 @Getter
 @Setter
-@ToString
 @NoArgsConstructor
 @AllArgsConstructor
 public class ResponseDTO<T> {
@@ -49,6 +49,11 @@ public class ResponseDTO<T> {
         ResponseDTO<T> response = new ResponseDTO<>();
         response.setSuccess(false);
         return response;
+    }
+
+    @Override
+    public String toString() {
+        return new Gson().toJson(this);
     }
 
 }

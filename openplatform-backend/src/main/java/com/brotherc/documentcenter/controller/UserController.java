@@ -55,7 +55,7 @@ public class UserController {
 
     @Operation(summary = "用户登录")
     @PostMapping("/login")
-    public Mono<ResponseDTO<UserDTO>> login(@Valid @RequestBody UserLoginDTO userLoginDTO) {
+    public Mono<ResponseDTO<UserTokenDTO>> login(@Valid @RequestBody UserLoginDTO userLoginDTO) {
         return userService.login(userLoginDTO).map(ResponseDTO::success);
     }
 

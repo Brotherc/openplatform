@@ -21,3 +21,11 @@ es:
 # 密码加密配置
 password:
   salt: "openplatform2025!@#$%"
+
+#sa-token:
+sa-token:
+  tokenName: Authorization
+  # jwt秘钥
+  jwt-secret-key: asdasdasifhueuiwyurfewbfjsdafjk
+  # 禁用从 Cookie 读取 Token
+  is-read-cookie: false
