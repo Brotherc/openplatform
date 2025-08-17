@@ -10,6 +10,7 @@ import 'vxe-table/lib/style.css';
 import VxeUIAll from 'vxe-pc-ui';
 import 'vxe-pc-ui/lib/style.css';
 import './assets/styles/theme.css'
+import './utils/axios'
 
 const app = createApp(App);
 

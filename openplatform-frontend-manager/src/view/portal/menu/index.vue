@@ -8,13 +8,13 @@
     </div>
 
     <a-table
-      :columns="columns"
-      :data-source="menuList"
-      :loading="loading"
-      :pagination="false"
-      @change="handleTableChange"
-      row-key="menuId"
-      :expandable="{
+        :columns="columns"
+        :data-source="menuList"
+        :loading="loading"
+        :pagination="false"
+        @change="handleTableChange"
+        row-key="menuId"
+        :expandable="{
         defaultExpandAllRows: true,
         childrenColumnName: 'children'
       }"
@@ -40,19 +40,19 @@
 
     <!-- 新增/编辑菜单弹窗 -->
     <a-modal
-      v-model:open="modalVisible"
-      :title="isEdit ? '编辑菜单' : '新增菜单'"
-      @ok="handleSubmit"
-      @cancel="handleCancel"
-      :confirm-loading="submitLoading"
-      ok-text="确定"
-      cancel-text="取消"
+        v-model:open="modalVisible"
+        :title="isEdit ? '编辑菜单' : '新增菜单'"
+        @ok="handleSubmit"
+        @cancel="handleCancel"
+        :confirm-loading="submitLoading"
+        ok-text="确定"
+        cancel-text="取消"
     >
       <a-form
-        ref="formRef"
-        :model="formData"
-        :rules="rules"
-        layout="vertical"
+          ref="formRef"
+          :model="formData"
+          :rules="rules"
+          layout="vertical"
       >
         <a-form-item label="菜单名称" name="name">
           <a-input v-model:value="formData.name" placeholder="请输入菜单名称" />
@@ -62,12 +62,12 @@
         </a-form-item>
         <a-form-item label="父级菜单" name="parentId">
           <a-tree-select
-            v-model:value="formData.parentId"
-            :tree-data="getFilteredParentOptions()"
-            placeholder="请选择父级菜单"
-            allow-clear
-            tree-default-expand-all
-            :field-names="{ children: 'children', label: 'name', value: 'menuId' }"
+              v-model:value="formData.parentId"
+              :tree-data="getFilteredParentOptions()"
+              placeholder="请选择父级菜单"
+              allow-clear
+              tree-default-expand-all
+              :field-names="{ children: 'children', label: 'name', value: 'menuId' }"
           />
         </a-form-item>
         <a-form-item label="文档分组" name="docCatalogGroupId">
@@ -103,6 +103,7 @@ import { message, Modal } from 'ant-design-vue'
 import { Tag } from 'ant-design-vue'
 import { PlusOutlined } from '@ant-design/icons-vue'
 import type { FormInstance } from 'ant-design-vue'
+import axios from "axios";
 
 interface MenuItem {
   id: number
@@ -217,12 +218,12 @@ const columns = [
 const buildTreeData = (data: MenuItem[]): MenuItem[] => {
   const map = new Map()
   const result: MenuItem[] = []
-  
+
   // 创建映射
   data.forEach(item => {
     map.set(item.id, { ...item, children: [] })
   })
-  
+
   // 构建树形结构
   data.forEach(item => {
     const node = map.get(item.id)
@@ -235,7 +236,7 @@ const buildTreeData = (data: MenuItem[]): MenuItem[] => {
       }
     }
   })
-  
+
   return result
 }
 
@@ -261,61 +262,25 @@ const fetchMenuList = async () => {
   loading.value = true
   try {
     // 使用树形接口获取所有菜单数据
-    const response = await fetch('http://localhost:8080/menu/tree')
-    
-    if (response.ok) {
-      const data = await response.json()
-      if (data.code === 0) {
-        // 直接使用树形数据
-        menuList.value = data.data || []
-        // 计算总记录数（包括所有层级的节点）
-        const countNodes = (nodes) => {
-          let count = 0
-          nodes.forEach(node => {
-            count++
-            if (node.children && node.children.length > 0) {
-              count += countNodes(node.children)
-            }
-          })
-          return count
-        }
-        pagination.total = countNodes(menuList.value)
-      } else {
-        message.error(data.message || '获取菜单列表失败')
+    const response = await axios.get('http://127.0.0.1:8080/menu/tree')
+
+    if (response.data.code === 0) {
+      // 直接使用树形数据
+      menuList.value = response.data.data || []
+      // 计算总记录数（包括所有层级的节点）
+      const countNodes = (nodes) => {
+        let count = 0
+        nodes.forEach(node => {
+          count++
+          if (node.children && node.children.length > 0) {
+            count += countNodes(node.children)
+          }
+        })
+        return count
       }
+      pagination.total = countNodes(menuList.value)
     } else {
-      // 模拟数据
-      const mockData = [
-        {
-          menuId: 1,
-          name: '系统管理',
-          path: '/system',
-          icon: 'setting',
-          sort: 1,
-          status: 2,
-          description: '系统管理模块',
-          parentId: null,
-          createTime: '2024-01-01 10:00:00',
-          updateTime: '2024-01-01 10:00:00',
-          children: [
-            {
-              menuId: 2,
-              name: '用户管理',
-              path: '/system/user',
-              icon: 'user',
-              sort: 1,
-              status: 2,
-              description: '用户管理功能',
-              parentId: 1,
-              createTime: '2024-01-01 10:00:00',
-              updateTime: '2024-01-01 10:00:00',
-              children: []
-            }
-          ]
-        }
-      ]
-      menuList.value = mockData // 直接使用树形数据
-      pagination.total = 2 // 模拟总记录数
+      message.error(response.data.message || '获取菜单列表失败')
     }
   } catch (error) {
     console.error('获取菜单列表失败:', error)
@@ -374,10 +339,9 @@ const showEditModal = async (record: MenuItem) => {
 // 获取父级菜单树
 const fetchParentMenuTree = async () => {
   try {
-    const res = await fetch('http://localhost:8080/menu/tree')
-    const data = await res.json()
-    if (data.code === 0) {
-      parentMenuOptions.value = data.data || []
+    const response = await axios.get('http://127.0.0.1:8080/menu/tree')
+    if (response.data.code === 0) {
+      parentMenuOptions.value = response.data.data || []
     } else {
       parentMenuOptions.value = []
     }
@@ -389,10 +353,9 @@ const fetchParentMenuTree = async () => {
 // 获取文档分组列表
 const fetchDocCatalogGroupList = async () => {
   try {
-    const res = await fetch('http://localhost:8080/docCatalogGroup/getList')
-    const data = await res.json()
-    if (data.code === 0) {
-      docCatalogGroupList.value = data.data || []
+    const response = await axios.get('http://127.0.0.1:8080/docCatalogGroup/getList')
+    if (response.data.code === 0) {
+      docCatalogGroupList.value = response.data.data || []
     } else {
       docCatalogGroupList.value = []
     }
@@ -422,55 +385,42 @@ const handleSubmit = async () => {
   try {
     await formRef.value?.validate()
     submitLoading.value = true
-    
+
     let response
     if (isEdit.value) {
       // 编辑接口联调
-      response = await fetch('http://localhost:8080/menu/updateById', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          menuId: formData.id || formData.menuId,
-          name: formData.name,
-          description: formData.description,
-          parentId: formData.parentId == null ? 0 : formData.parentId,
-          status: formData.status,
-          path: formData.path,
-          icon: formData.icon,
-          sort: formData.sort,
-          docCatalogGroupId: formData.docCatalogGroupId
-        })
+      response = await axios.post('http://127.0.0.1:8080/menu/updateById', {
+        menuId: formData.id || formData.menuId,
+        name: formData.name,
+        description: formData.description,
+        parentId: formData.parentId == null ? 0 : formData.parentId,
+        status: formData.status,
+        path: formData.path,
+        icon: formData.icon,
+        sort: formData.sort,
+        docCatalogGroupId: formData.docCatalogGroupId
       })
     } else {
       // 新增菜单接口联调
-      response = await fetch('http://localhost:8080/menu/add', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          name: formData.name,
-          description: formData.description,
-          parentId: formData.parentId == null ? 0 : formData.parentId,
-          status: formData.status,
-          path: formData.path,
-          icon: formData.icon,
-          sort: formData.sort,
-          docCatalogGroupId: formData.docCatalogGroupId
-        })
+      response = await axios.post('http://127.0.0.1:8080/menu/add', {
+        name: formData.name,
+        description: formData.description,
+        parentId: formData.parentId == null ? 0 : formData.parentId,
+        status: formData.status,
+        path: formData.path,
+        icon: formData.icon,
+        sort: formData.sort,
+        docCatalogGroupId: formData.docCatalogGroupId
       })
     }
-    
-    const resJson = await response.json()
-    if (resJson.code === 0) {
+
+    if (response.data.code === 0) {
       message.success(isEdit.value ? '编辑成功' : '新增成功')
       modalVisible.value = false
       resetForm()
       fetchMenuList()
     } else {
-      message.error(resJson.message || '操作失败')
+      message.error(response.data.message || '操作失败')
     }
   } catch (error) {
     console.error('提交失败:', error)
@@ -506,11 +456,11 @@ const getFilteredParentOptions = () => {
   // 递归过滤
   const filterTree = (nodes) => {
     return nodes
-      .filter(node => !excludeIds.has(node.menuId))
-      .map(node => ({
-        ...node,
-        children: node.children ? filterTree(node.children) : []
-      }))
+        .filter(node => !excludeIds.has(node.menuId))
+        .map(node => ({
+          ...node,
+          children: node.children ? filterTree(node.children) : []
+        }))
   }
   return filterTree(parentMenuOptions.value)
 }
@@ -530,19 +480,14 @@ const handleDelete = (record: MenuItem) => {
     cancelText: '取消',
     onOk: async () => {
       try {
-        const response = await fetch('http://localhost:8080/menu/deleteById', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ menuId: record.id || record.menuId })
+        const response = await axios.post('http://127.0.0.1:8080/menu/deleteById', {
+          menuId: record.id || record.menuId
         })
-        const resJson = await response.json()
-        if (resJson.code === 0) {
+        if (response.data.code === 0) {
           message.success('删除成功')
           fetchMenuList()
         } else {
-          message.error(resJson.message || '删除失败')
+          message.error(response.data.message || '删除失败')
         }
       } catch (error) {
         console.error('删除失败:', error)

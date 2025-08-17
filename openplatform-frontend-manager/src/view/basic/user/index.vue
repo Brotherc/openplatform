@@ -139,8 +139,7 @@ import { message, Modal } from 'ant-design-vue'
 import { PlusOutlined, SearchOutlined, ReloadOutlined } from '@ant-design/icons-vue'
 import axios from 'axios'
 
-// 设置API基础URL
-axios.defaults.baseURL = 'http://127.0.0.1:8080'
+
 
 // 用户数据接口
 interface User {

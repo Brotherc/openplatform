@@ -502,8 +502,7 @@ import {
 import axios from 'axios'
 import { VxeUI, VxeTableInstance } from 'vxe-table'
 
-// 配置axios默认值
-axios.defaults.baseURL = 'http://127.0.0.1:8080'
+
 
 interface TreeNode {
   key: string

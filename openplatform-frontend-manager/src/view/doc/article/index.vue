@@ -272,8 +272,7 @@ import { MdEditor } from 'md-editor-v3'
 import 'md-editor-v3/lib/style.css'
 import axios from 'axios'
 
-// 配置axios默认值
-axios.defaults.baseURL = 'http://127.0.0.1:8080'
+
 
 interface Group {
   id: string
