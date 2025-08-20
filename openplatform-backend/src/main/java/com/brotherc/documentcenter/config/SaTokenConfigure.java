@@ -12,6 +12,8 @@ import com.brotherc.documentcenter.exception.ExceptionEnum;
 import com.brotherc.documentcenter.model.dto.common.ResponseDTO;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 
 /**
  * [Sa-Token 权限认证] 全局配置类
@@ -48,7 +50,7 @@ public class SaTokenConfigure {
                         .check(r -> StpUtil.checkLogin()))
                 .setError(e -> {
                     // 设置响应头
-                    SaHolder.getResponse().setHeader("Content-Type", "application/json;charset=UTF-8");
+                    SaHolder.getResponse().setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_UTF8_VALUE);
                     // 创建响应DTO
                     if (e instanceof SaTokenException saTokenException) {
                         return ResponseDTO.fail(1100000 + saTokenException.getCode(), saTokenException.getMessage(), null);
