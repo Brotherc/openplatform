@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import org.springframework.boot.autoconfigure.jackson.Jackson2ObjectMapperBuilderCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.reactive.CorsWebFilter;
 import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
@@ -47,7 +48,11 @@ public class WebConfig {
         }
     }
 
+    /**
+     * 此处设置Order为-101，是因为SaServletFilter默认执行顺序为-100，设置比-100小是为了先执行，否则SaServletFilter如果发生异常，跨域过滤器会因为没执行而产生跨域
+     */
     @Bean
+    @Order(-101)
     public CorsWebFilter corsWebFilter() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
