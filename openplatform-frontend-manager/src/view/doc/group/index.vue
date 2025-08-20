@@ -11,18 +11,18 @@
         <a-form layout="inline" :model="searchForm">
           <a-form-item label="分组名称">
             <a-input
-              v-model:value="searchForm.name"
-              placeholder="请输入分组名称"
-              allow-clear
-              style="width: 200px"
+                v-model:value="searchForm.name"
+                placeholder="请输入分组名称"
+                allow-clear
+                style="width: 200px"
             />
           </a-form-item>
           <a-form-item label="状态">
             <a-select
-              v-model:value="searchForm.status"
-              placeholder="请选择状态"
-              style="width: 120px"
-              allow-clear
+                v-model:value="searchForm.status"
+                placeholder="请选择状态"
+                style="width: 120px"
+                allow-clear
             >
               <a-select-option :value="1">未发布</a-select-option>
               <a-select-option :value="2">已发布</a-select-option>
@@ -44,10 +44,10 @@
       </div>
     </div>
     <a-table
-      :columns="columns"
-      :data-source="dataSource"
-      :loading="loading"
-      :pagination="{
+        :columns="columns"
+        :data-source="dataSource"
+        :loading="loading"
+        :pagination="{
         current: pagination.current,
         pageSize: pagination.pageSize,
         total: pagination.total,
@@ -68,7 +68,7 @@
           next_3: '向后 3 页',
         }
       }"
-      @change="handleTableChange"
+        @change="handleTableChange"
     >
       <template #bodyCell="{ column, record }">
         <template v-if="column.key === 'status'">
@@ -94,37 +94,37 @@
 
     <!-- 创建/编辑分组弹窗 -->
     <a-modal
-      v-model:visible="modalVisible"
-      :title="modalType === 'create' ? '新建分组' : '编辑分组'"
-      @ok="handleModalOk"
-      @cancel="handleModalCancel"
-      okText="确定"
-      cancelText="取消"
+        v-model:visible="modalVisible"
+        :title="modalType === 'create' ? '新建分组' : '编辑分组'"
+        @ok="handleModalOk"
+        @cancel="handleModalCancel"
+        okText="确定"
+        cancelText="取消"
     >
       <a-form
-        ref="formRef"
-        :model="formState"
-        :rules="rules"
-        layout="vertical"
+          ref="formRef"
+          :model="formState"
+          :rules="rules"
+          layout="vertical"
       >
         <a-form-item label="分组名称" name="name">
           <a-input v-model:value="formState.name" placeholder="请输入分组名称" />
         </a-form-item>
         <a-form-item label="分组描述" name="description">
           <a-textarea
-            v-model:value="formState.description"
-            placeholder="请输入分组描述"
-            :rows="4"
+              v-model:value="formState.description"
+              placeholder="请输入分组描述"
+              :rows="4"
           />
         </a-form-item>
         <a-form-item label="排序" name="sort">
           <a-input-number
-            v-model:value="formState.sort"
-            :min="0"
-            :step="1"
-            :precision="0"
-            placeholder="请输入排序号"
-            style="width: 100%"
+              v-model:value="formState.sort"
+              :min="0"
+              :step="1"
+              :precision="0"
+              placeholder="请输入排序号"
+              style="width: 100%"
           />
         </a-form-item>
       </a-form>
@@ -250,7 +250,7 @@ const fetchGroups = async () => {
         sort: 'sort,asc'
       }
     })
-    
+
     if (response.data.code === 0) {
       const pageData = response.data.data
       dataSource.value = pageData.content.map(item => ({
@@ -275,7 +275,6 @@ const fetchGroups = async () => {
     }
   } catch (error) {
     console.error('获取分组列表失败:', error)
-    message.error('获取分组列表失败，请稍后重试')
   } finally {
     loading.value = false
   }
@@ -339,9 +338,9 @@ const handleModalOk = async () => {
         description: formState.description,
         sort: formState.sort
       })
-      
+
       if (response.data.code === 0) {
-      message.success('创建成功')
+        message.success('创建成功')
         modalVisible.value = false
         fetchGroups()
       } else {
@@ -355,18 +354,17 @@ const handleModalOk = async () => {
         description: formState.description,
         sort: formState.sort
       })
-      
+
       if (response.data.code === 0) {
-      message.success('更新成功')
-    modalVisible.value = false
-    fetchGroups()
+        message.success('更新成功')
+        modalVisible.value = false
+        fetchGroups()
       } else {
         message.error(response.data.message || '更新失败')
       }
     }
   } catch (error) {
     console.error('操作失败:', error)
-    message.error('操作失败，请稍后重试')
   }
 }
 
@@ -391,7 +389,7 @@ const handleDelete = (record: Group) => {
         const response = await axios.post('http://127.0.0.1:8080/docCatalogGroup/deleteById', {
           docCatalogGroupId: record.id
         })
-        
+
         if (response.data.code === 0) {
           message.success('删除成功')
           fetchGroups()
@@ -400,7 +398,6 @@ const handleDelete = (record: Group) => {
         }
       } catch (error) {
         console.error('删除失败:', error)
-        message.error('删除失败，请稍后重试')
       }
     }
   })
@@ -413,16 +410,15 @@ const handlePublish = async (record: Group) => {
       docCatalogGroupId: record.id,
       status: 2
     })
-    
+
     if (response.data.code === 0) {
-    message.success('发布成功')
-    fetchGroups()
+      message.success('发布成功')
+      fetchGroups()
     } else {
       message.error(response.data.message || '发布失败')
     }
   } catch (error) {
     console.error('发布失败:', error)
-    message.error('发布失败，请稍后重试')
   }
 }
 
@@ -433,16 +429,15 @@ const handleUnpublish = async (record: Group) => {
       docCatalogGroupId: record.id,
       status: 1
     })
-    
+
     if (response.data.code === 0) {
-    message.success('下架成功')
-    fetchGroups()
+      message.success('下架成功')
+      fetchGroups()
     } else {
       message.error(response.data.message || '下架失败')
     }
   } catch (error) {
     console.error('下架失败:', error)
-    message.error('下架失败，请稍后重试')
   }
 }
 

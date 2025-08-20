@@ -377,7 +377,6 @@ const fetchApiDetail = async (docCatalogId: string) => {
     }
   } catch (error) {
     console.error('获取API详情失败:', error)
-    message.error('获取API详情失败，请稍后重试')
     apiDetail.value = null
   } finally {
     apiDetailLoading.value = false
@@ -429,7 +428,6 @@ const fetchGroups = async () => {
     }
   } catch (error) {
     console.error('获取分组列表失败:', error)
-    message.error('获取分组列表失败，请稍后重试')
   }
 }
 
@@ -476,7 +474,6 @@ const fetchDocTree = async () => {
     }
   } catch (error) {
     console.error('获取文档树失败:', error)
-    message.error('获取文档树失败，请稍后重试')
   }
 }
 
@@ -593,7 +590,6 @@ const onSelect = async (selectedKeys: string[], info: any) => {
       }
     } catch (error) {
       console.error('获取文章详情失败:', error)
-      message.error('获取文章详情失败，请稍后重试')
       selectedArticle.value = null;
     }
   } else if (node.dataRef.type === 3) {  // 3 表示API
@@ -682,7 +678,6 @@ const handleDelete = async (keys: string[]) => {
     }
   } catch (error) {
     console.error('删除失败:', error)
-    message.error('删除失败，请稍后重试')
   }
 }
 
@@ -705,7 +700,6 @@ const handleSingleDelete = async (key: string) => {
     }
   } catch (error) {
     console.error('删除失败:', error)
-    message.error('删除失败，请稍后重试')
   }
 }
 
@@ -740,7 +734,6 @@ const handleSave = async () => {
     }
   } catch (error) {
     console.error('保存失败:', error)
-    message.error('保存失败，请稍后重试')
   }
 }
 
@@ -795,7 +788,6 @@ const handleModalOk = async () => {
     }
   } catch (error) {
     console.error('操作失败:', error)
-    message.error('操作失败，请稍后重试')
   }
 }
 
@@ -828,7 +820,6 @@ const handlePublish = async (keys: string[]) => {
     }
   } catch (error) {
     console.error('发布失败:', error)
-    message.error('发布失败，请稍后重试')
   }
 }
 
@@ -852,7 +843,6 @@ const handleUnpublish = async (keys: string[]) => {
     }
   } catch (error) {
     console.error('下架失败:', error)
-    message.error('下架失败，请稍后重试')
   }
 }
 

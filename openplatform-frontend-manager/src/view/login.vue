@@ -128,17 +128,8 @@ const onFinish = async (values: FormState) => {
       message.error(response.data.message || '登录失败，用户名或密码错误')
     }
   } catch (error: any) {
+    // 统一错误处理已在axios拦截器中处理，这里只需要记录日志
     console.error('登录失败:', error)
-    if (error.response) {
-      // 服务器返回错误
-      message.error(error.response.data?.message || '登录失败，请检查网络连接')
-    } else if (error.request) {
-      // 网络错误
-      message.error('网络连接失败，请检查网络设置')
-    } else {
-      // 其他错误
-      message.error('登录失败，请重试')
-    }
   } finally {
     loading.value = false
   }

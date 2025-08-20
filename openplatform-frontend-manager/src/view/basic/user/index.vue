@@ -279,7 +279,6 @@ const fetchUserList = async () => {
     }
   } catch (error) {
     console.error('获取用户列表失败:', error)
-    message.error('获取用户列表失败，请稍后重试')
   } finally {
     loading.value = false
   }
@@ -397,7 +396,6 @@ const handleSubmit = async () => {
       // 表单验证错误
       return
     }
-    message.error('操作失败，请稍后重试')
   } finally {
     submitLoading.value = false
   }
@@ -447,7 +445,6 @@ const handleDelete = (record: User) => {
         }
       } catch (error) {
         console.error('删除用户失败:', error)
-        message.error('删除用户失败，请稍后重试')
       }
     }
   })
