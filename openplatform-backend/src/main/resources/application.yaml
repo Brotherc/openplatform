@@ -11,6 +11,11 @@ spring:
   jackson:
     serialization:
       write-dates-as-timestamps: true
+  data:
+    redis:
+      database: 0
+      host: 127.0.0.1
+      port: 6379
 
 logging:
   config: classpath:log/logback-app.xml
