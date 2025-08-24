@@ -166,4 +166,15 @@ public class UserService {
                 .switchIfEmpty(Mono.error(new BusinessException(ExceptionEnum.LOGIN_USERNAME_PASSWORD_ERROR)));
     }
 
+    public Mono<UserTokenDTO> getCurrentUser() {
+        return SaReactorHolder.sync(() -> Long.parseLong(StpUtil.getLoginId().toString()))
+                .flatMap(userId -> userRepository.findByUserIdAndIsDel(userId, 0))
+                .map(user -> {
+                    UserTokenDTO userDTO = new UserTokenDTO();
+                    BeanUtils.copyProperties(user, userDTO);
+                    return userDTO;
+                })
+                .switchIfEmpty(Mono.error(new BusinessException(ExceptionEnum.SYS_USER_UN_EXISTS)));
+    }
+
 }

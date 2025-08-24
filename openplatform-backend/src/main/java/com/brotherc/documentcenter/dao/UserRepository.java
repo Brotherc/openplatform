@@ -12,4 +12,6 @@ public interface UserRepository extends R2dbcRepository<User, Long> {
 
     Mono<User> findByUsernameAndIsDel(String username, Integer isDel);
 
+    Mono<User> findByUserIdAndIsDel(Long userId, Integer isDel);
+
 }
