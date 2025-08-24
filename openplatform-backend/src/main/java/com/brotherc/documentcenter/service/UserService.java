@@ -6,6 +6,7 @@ import cn.dev33.satoken.stp.StpUtil;
 import com.brotherc.documentcenter.constants.DefaultConstant;
 import com.brotherc.documentcenter.constants.UserConstant;
 import com.brotherc.documentcenter.dao.UserRepository;
+import com.brotherc.documentcenter.enums.UserStatusEnum;
 import com.brotherc.documentcenter.exception.BusinessException;
 import com.brotherc.documentcenter.exception.ExceptionEnum;
 import com.brotherc.documentcenter.model.dto.user.*;
@@ -146,25 +147,30 @@ public class UserService {
                 .map(p -> new PageImpl<>(p.getT1(), pageable, p.getT2()));
     }
 
-    public Mono<UserTokenDTO> login(UserLoginDTO userLoginDTO) {
-        return userRepository.findByUsernameAndIsDel(userLoginDTO.getUsername(), 0)
-                .filter(user -> {
-                    // 验证密码
-                    return passwordUtil.verifyPassword(userLoginDTO.getPassword(), user.getPassword());
-                })
-                .map(user -> {
-                    UserTokenDTO userDTO = new UserTokenDTO();
-                    BeanUtils.copyProperties(user, userDTO);
-                    return userDTO;
-                })
-                .flatMap(userDTO -> SaReactorHolder.sync(() -> {
+public Mono<UserTokenDTO> login(UserLoginDTO userLoginDTO) {
+    return userRepository.findByUsernameAndIsDel(userLoginDTO.getUsername(), 0)
+            .switchIfEmpty(Mono.error(new BusinessException(ExceptionEnum.LOGIN_USERNAME_PASSWORD_ERROR)))
+            .flatMap(user -> {
+                // 验证密码
+                if (!passwordUtil.verifyPassword(userLoginDTO.getPassword(), user.getPassword())) {
+                    return Mono.error(new BusinessException(ExceptionEnum.LOGIN_USERNAME_PASSWORD_ERROR));
+                }
+                // 判断状态
+                if (user.getStatus() == UserStatusEnum.DISABLED.getCode()) {
+                    return Mono.error(new BusinessException(ExceptionEnum.USER_DISABLED));
+                }
+
+                UserTokenDTO userDTO = new UserTokenDTO();
+                BeanUtils.copyProperties(user, userDTO);
+
+                return SaReactorHolder.sync(() -> {
                     StpUtil.login(userDTO.getUserId());
                     SaTokenInfo tokenInfo = StpUtil.getTokenInfo();
                     userDTO.setToken(tokenInfo.getTokenValue());
                     return userDTO;
-                }))
-                .switchIfEmpty(Mono.error(new BusinessException(ExceptionEnum.LOGIN_USERNAME_PASSWORD_ERROR)));
-    }
+                });
+            });
+}
 
     public Mono<UserTokenDTO> getCurrentUser() {
         return SaReactorHolder.sync(() -> Long.parseLong(StpUtil.getLoginId().toString()))

@@ -36,8 +36,9 @@ public enum ExceptionEnum {
     LOGIN_USERNAME_NULL_ERROR(1010109, "用户名不能为空"),
     LOGIN_PASSWORD_NULL_ERROR(1010110, "密码不能为空"),
     LOGIN_USERNAME_PASSWORD_ERROR(1010111, "用户名或密码错误"),
-    LOGIN_TOKEN_ERROR(1010112, "请先登录"),
-    PERMISSION_ERROR(1010113, "没有权限"),
+    USER_DISABLED(1010112, "用户被禁用"),
+    LOGIN_TOKEN_ERROR(1010113, "请先登录"),
+    PERMISSION_ERROR(1010114, "没有权限"),
     ;
 
     /**
