@@ -48,42 +48,39 @@ public class LoggingWebFilter implements WebFilter {
         MediaType contentType = request.getHeaders().getContentType();
         if (HttpMethod.POST.name().equals(method)) {
             return DataBufferUtils.join(exchange.getRequest().getBody())
+                    // 处理空 body 情况
+                    .defaultIfEmpty(exchange.getResponse().bufferFactory().wrap(new byte[0]))
                     .flatMap(dataBuffer -> {
                         byte[] bytes = new byte[dataBuffer.readableByteCount()];
                         dataBuffer.read(bytes);
+                        // 释放掉
+                        DataBufferUtils.release(dataBuffer);
+
                         String bodyString = new String(bytes, StandardCharsets.UTF_8);
 
-                        if (legalLogMediaTypes.contains(contentType)) {
-                            // 打印请求参数
-                            log.info("""
-                                    
-                                    Body       :
-                                    {}""", bodyString);
+                        if (contentType != null && legalLogMediaTypes.contains(contentType)) {
+                            log.info("\nBody:\n{}", bodyString);
                         }
 
-                        DataBufferUtils.release(dataBuffer);
+                        // 缓存起来，确保下游还能读到 body
                         Flux<DataBuffer> cachedFlux = Flux.defer(() -> {
-                            DataBuffer buffer = exchange.getResponse().bufferFactory()
-                                    .wrap(bytes);
+                            DataBuffer buffer = exchange.getResponse().bufferFactory().wrap(bytes);
                             return Mono.just(buffer);
                         });
 
-                        ServerHttpRequest mutatedRequest = new ServerHttpRequestDecorator(
-                                exchange.getRequest()) {
+                        ServerHttpRequest mutatedRequest = new ServerHttpRequestDecorator(exchange.getRequest()) {
                             @Override
                             public Flux<DataBuffer> getBody() {
                                 return cachedFlux;
                             }
                         };
                         return chain.filter(
-                                exchange.mutate().request(mutatedRequest).response(new LoggingResponseDecorator(exchange.getResponse())).build()
+                                exchange.mutate()
+                                        .request(mutatedRequest)
+                                        .response(new LoggingResponseDecorator(exchange.getResponse()))
+                                        .build()
                         );
-                    })
-                    .switchIfEmpty(chain.filter(
-                            exchange.mutate()
-                                    .response(new LoggingResponseDecorator(exchange.getResponse()))
-                                    .build()
-                    ));
+                    });
         }
         return chain.filter(exchange.mutate().response(new LoggingResponseDecorator(exchange.getResponse())).build());
     }
