@@ -39,6 +39,8 @@ public enum ExceptionEnum {
     USER_DISABLED(1010112, "用户被禁用"),
     LOGIN_TOKEN_ERROR(1010113, "请先登录"),
     PERMISSION_ERROR(1010114, "没有权限"),
+    USER_LOGIN_REPEAT(1010115, "用户不存在，请重新登陆"),
+    USER_STATUS_ERROR(1010116, "用户状态异常，请重新登陆"),
     ;
 
     /**
