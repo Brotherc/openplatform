@@ -59,6 +59,12 @@ public class UserController {
         return userService.login(userLoginDTO).map(ResponseDTO::success);
     }
 
+    @Operation(summary = "用户登出")
+    @PostMapping("/logout")
+    public Mono<ResponseDTO<Void>> logout() {
+        return userService.logout().map(o -> ResponseDTO.success());
+    }
+
     @Operation(summary = "获取当前登陆用户信息")
     @GetMapping("/currentUser")
     public Mono<ResponseDTO<UserTokenDTO>> getCurrentUser() {
