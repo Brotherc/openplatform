@@ -41,7 +41,7 @@ public class LoggingWebFilter implements WebFilter {
         final String query = request.getURI().getQuery();
         final String headers = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
         log.info("""
-                                
+                
                 HttpMethod : {}
                 Uri        : {}
                 Headers    : {}""", method, path + (StringUtils.isNotBlank(query) ? "?" + query : ""), headers);
@@ -56,7 +56,7 @@ public class LoggingWebFilter implements WebFilter {
                         if (legalLogMediaTypes.contains(contentType)) {
                             // 打印请求参数
                             log.info("""
-
+                                    
                                     Body       :
                                     {}""", bodyString);
                         }
@@ -78,7 +78,12 @@ public class LoggingWebFilter implements WebFilter {
                         return chain.filter(
                                 exchange.mutate().request(mutatedRequest).response(new LoggingResponseDecorator(exchange.getResponse())).build()
                         );
-                    });
+                    })
+                    .switchIfEmpty(chain.filter(
+                            exchange.mutate()
+                                    .response(new LoggingResponseDecorator(exchange.getResponse()))
+                                    .build()
+                    ));
         }
         return chain.filter(exchange.mutate().response(new LoggingResponseDecorator(exchange.getResponse())).build());
     }
