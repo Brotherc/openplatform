@@ -18,11 +18,21 @@ axios.interceptors.request.use(
     }
 )
 
-// 清除用户信息并跳转到登录页
-const clearUserInfoAndRedirect = () => {
+// 清除用户信息
+const clearUserInfo = () => {
     localStorage.removeItem('access_token')
     localStorage.removeItem('userInfo')
+}
+
+// 跳转到登录页
+const redirect = () => {
     window.location.href = '/login'
+}
+
+// 清除用户信息并跳转到登录页
+const clearUserInfoAndRedirect = () => {
+    clearUserInfo()
+    redirect()
 }
 
 // 设置响应拦截器，处理token过期等情况
@@ -37,6 +47,7 @@ axios.interceptors.response.use(
                 clearUserInfoAndRedirect()
                 return Promise.reject(new Error('需要重新登录'))
             } else if (code === 1111012) {
+                clearUserInfo()
                 // 显示弹窗提示长时间未操作
                 Modal.confirm({
                     title: '提示',
@@ -44,13 +55,45 @@ axios.interceptors.response.use(
                     okText: '确定',
                     cancelText: '取消',
                     onOk: () => {
-                        clearUserInfoAndRedirect()
+                        redirect()
                     },
                     onCancel: () => {
-                        clearUserInfoAndRedirect()
+                        redirect()
                     }
                 })
                 return Promise.reject(new Error('长时间未操作'))
+            } else if (code === 1010115) {
+                clearUserInfo()
+                // 显示弹窗提示用户不存在
+                Modal.confirm({
+                    title: '提示',
+                    content: '用户不存在，请重新登录',
+                    okText: '确定',
+                    cancelText: '取消',
+                    onOk: () => {
+                        redirect()
+                    },
+                    onCancel: () => {
+                        redirect()
+                    }
+                })
+                return Promise.reject(new Error('用户不存在'))
+            } else if (code === 1010116) {
+                clearUserInfo()
+                // 显示弹窗提示用户状态异常
+                Modal.confirm({
+                    title: '提示',
+                    content: '用户状态异常，请重新登录',
+                    okText: '确定',
+                    cancelText: '取消',
+                    onOk: () => {
+                        redirect()
+                    },
+                    onCancel: () => {
+                        redirect()
+                    }
+                })
+                return Promise.reject(new Error('用户状态异常'))
             }
         }
 
