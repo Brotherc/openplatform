@@ -64,13 +64,32 @@
       </a-menu>
     </a-layout-sider>
     <a-layout>
-      <a-layout-header style="background: #fff; padding: 0">
-        <menu-unfold-outlined
-            v-if="collapsed"
-            class="trigger"
-            @click="() => (collapsed = !collapsed)"
-        />
-        <menu-fold-outlined v-else class="trigger" @click="() => (collapsed = !collapsed)" />
+      <a-layout-header style="background: #fff; padding: 0; display: flex; justify-content: space-between; align-items: center;">
+        <div class="header-left">
+          <menu-unfold-outlined
+              v-if="collapsed"
+              class="trigger"
+              @click="() => (collapsed = !collapsed)"
+          />
+          <menu-fold-outlined v-else class="trigger" @click="() => (collapsed = !collapsed)" />
+        </div>
+        <div class="header-right">
+          <a-dropdown>
+            <a-space class="user-info">
+              <user-outlined />
+              <span>{{ username || '用户' }}</span>
+              <down-outlined />
+            </a-space>
+            <template #overlay>
+              <a-menu>
+                <a-menu-item key="logout" @click="handleLogout">
+                  <logout-outlined />
+                  退出登录
+                </a-menu-item>
+              </a-menu>
+            </template>
+          </a-dropdown>
+        </div>
       </a-layout-header>
       <a-layout-content
           :style="{ margin: '24px 16px', padding: '24px 24px 24px 24px', background: '#fff', minHeight: '280px' }"
@@ -99,14 +118,19 @@ import {
   AppstoreOutlined,
   MenuOutlined,
   SettingOutlined,
-  UserOutlined
+  UserOutlined,
+  DownOutlined,
+  LogoutOutlined
 } from '@ant-design/icons-vue'
+import { Modal, message } from 'ant-design-vue'
+import axios from 'axios'
 import type { MenuClickEventHandler } from 'ant-design-vue/es/menu/src/interface'
 
 const router = useRouter()
 const collapsed = ref(false)
 const selectedKeys = ref<string[]>([])
 const openKeys = ref(['doc-center', 'api-center', 'portal-center', 'basic-setting'])
+const username = ref<string>('')
 
 // 根据当前路由设置选中的菜单项
 const setSelectedKeysFromRoute = () => {
@@ -127,8 +151,49 @@ watch(() => router.currentRoute.value.path, () => {
   setSelectedKeysFromRoute()
 })
 
+// 获取用户信息
+const getUserInfo = () => {
+  const userInfo = localStorage.getItem('userInfo')
+  if (userInfo) {
+    try {
+      const user = JSON.parse(userInfo)
+      username.value = user.nickname || user.username || '用户'
+    } catch (error) {
+      console.error('解析用户信息失败:', error)
+      username.value = '用户'
+    }
+  }
+}
+
+// 退出登录
+const handleLogout = () => {
+  Modal.confirm({
+    title: '确认退出',
+    content: '确定要退出登录吗？',
+    okText: '确定',
+    cancelText: '取消',
+    onOk: async () => {
+      try {
+        // 调用登出接口
+        await axios.post('/user/logout')
+        message.success('退出登录成功')
+      } catch (error) {
+        // 即使登出接口调用失败，也要清除本地数据
+        console.error('调用登出接口失败:', error)
+        message.warning('登出接口调用失败，但已清除本地登录信息')
+      } finally {
+        // 无论接口调用成功与否，都要清除本地存储并跳转
+        localStorage.removeItem('access_token')
+        localStorage.removeItem('userInfo')
+        router.push('/login')
+      }
+    }
+  })
+}
+
 onMounted(() => {
   setSelectedKeysFromRoute()
+  getUserInfo()
 })
 
 const handleMenuClick: MenuClickEventHandler = ({ key }) => {
@@ -147,6 +212,28 @@ const handleMenuClick: MenuClickEventHandler = ({ key }) => {
 
 .trigger:hover {
   color: #1890ff;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+}
+
+.header-right {
+  padding-right: 24px;
+}
+
+.user-info {
+  cursor: pointer;
+  padding: 0 16px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  transition: background-color 0.3s;
+}
+
+.user-info:hover {
+  background-color: #f5f5f5;
 }
 
 .logo {
