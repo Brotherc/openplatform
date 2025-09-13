@@ -65,7 +65,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { UserOutlined, LockOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
 import { useRouter } from 'vue-router'
@@ -138,6 +138,22 @@ const onFinish = async (values: FormState) => {
 const onFinishFailed = (errorInfo: any) => {
   console.log('Failed:', errorInfo)
 }
+
+// 检查本地是否有token，如果有则直接跳转到首页
+const checkTokenAndRedirect = () => {
+  const token = localStorage.getItem('access_token')
+  const userInfo = localStorage.getItem('userInfo')
+
+  if (token && userInfo) {
+    // 有token和用户信息，直接跳转到首页
+    router.push('/home')
+  }
+}
+
+// 组件挂载时检查token
+onMounted(() => {
+  checkTokenAndRedirect()
+})
 </script>
 
 <style scoped>
