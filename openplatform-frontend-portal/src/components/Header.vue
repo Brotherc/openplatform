@@ -36,7 +36,7 @@ const menuList = ref<any[]>([]);
 
 const fetchMenu = async () => {
   try {
-    const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/menu/tree/portal`);
+    const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/menu/portal/tree`);
     menuList.value = res.data?.data || [];
   } catch (e) {
     // eslint-disable-next-line no-console

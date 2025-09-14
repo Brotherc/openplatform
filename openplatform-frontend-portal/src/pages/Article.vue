@@ -176,7 +176,7 @@ const responseColumns = [
 const fetchTreeData = async () => {
   const groupId = route.query.docCatalogGroupId;
   if (!groupId) return;
-  const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/docCatalog/getTree/portal`, {
+  const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/docCatalog/portal/getTree`, {
     params: { docCatalogGroupId: groupId }
   });
   treeData.value = res.data?.data || [];
@@ -237,7 +237,7 @@ function findFirstNonType1Node(nodes: any[]): any | null {
 
 // 新增：获取文章内容方法
 const fetchArticleContent = async (id: string) => {
-  const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/docCatalog/getDocumentById/portal`, {
+  const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/docCatalog/portal/getDocumentById`, {
     params: { id }
   });
   return res.data?.data?.content || '';
@@ -245,7 +245,7 @@ const fetchArticleContent = async (id: string) => {
 
 // 新增：获取API详情方法
 const fetchApiInfo = async (docCatalogId: string) => {
-  const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/docCatalog/getApiInfoById/portal`, {
+  const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/docCatalog/portal/getApiInfoById`, {
     params: { docCatalogId }
   });
   return res.data?.data || null;
