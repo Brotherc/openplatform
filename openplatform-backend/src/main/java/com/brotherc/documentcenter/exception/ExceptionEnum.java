@@ -22,8 +22,9 @@ public enum ExceptionEnum {
 
     API_INFO_CATEGORY_NAME_EXIST_ERROR(1000201, "名称重复"),
 
-
     MENU_CHILDREN_DELETE_ERROR(1000301, "请先删除子菜单"),
+
+    DEVELOPER_USERNAME_EXISTS(1000401, "开发者用户名已存在"),
 
     ROLE_CODE_EXISTS(1010101, "角色code已存在"),
     ROLE_UN_EXISTS(1010102, "角色不存在"),

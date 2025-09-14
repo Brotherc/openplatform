@@ -1,0 +1,150 @@
+package com.brotherc.documentcenter.service;
+
+import com.brotherc.documentcenter.constants.DefaultConstant;
+import com.brotherc.documentcenter.constants.DeveloperConstant;
+import com.brotherc.documentcenter.dao.DeveloperRepository;
+import com.brotherc.documentcenter.exception.BusinessException;
+import com.brotherc.documentcenter.exception.ExceptionEnum;
+import com.brotherc.documentcenter.model.dto.developer.*;
+import com.brotherc.documentcenter.model.entity.Developer;
+import com.brotherc.documentcenter.util.PasswordUtil;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
+import org.springframework.data.relational.core.query.Criteria;
+import org.springframework.data.relational.core.query.Query;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import reactor.core.publisher.Mono;
+
+import java.time.LocalDateTime;
+
+@Slf4j
+@Service
+public class DeveloperService {
+
+    @Autowired
+    private DeveloperRepository developerRepository;
+    @Autowired
+    private R2dbcEntityTemplate r2dbcEntityTemplate;
+    @Autowired
+    private PasswordUtil passwordUtil;
+
+    @Transactional(rollbackFor = Exception.class)
+    public Mono<Developer> add(DeveloperAddDTO developerAddDTO) {
+        // 校验用户名是否重复（只检查未删除的开发者）
+        return developerRepository.countByUsernameAndIsDel(developerAddDTO.getUsername(), 0)
+                .flatMap(count -> {
+                    if (count > 0) {
+                        return Mono.error(new BusinessException(ExceptionEnum.DEVELOPER_USERNAME_EXISTS));
+                    }
+
+                    Developer developer = new Developer();
+                    BeanUtils.copyProperties(developerAddDTO, developer);
+
+                    // 加密密码
+                    String encryptedPassword = passwordUtil.encryptPassword(developer.getPassword());
+                    developer.setPassword(encryptedPassword);
+
+                    developer.setCreateBy(DefaultConstant.DEFAULT_CREATE_BY);
+                    developer.setUpdateBy(DefaultConstant.DEFAULT_UPDATE_BY);
+                    developer.setCreateTime(LocalDateTime.now());
+                    developer.setUpdateTime(LocalDateTime.now());
+
+                    return developerRepository.save(developer);
+                });
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public Mono<Developer> updateById(DeveloperUpdateDTO developerUpdateDTO) {
+        return developerRepository.findById(developerUpdateDTO.getDeveloperId())
+                // 只能更新未删除的开发者
+                .filter(developer -> developer.getIsDel() == 0)
+                .switchIfEmpty(Mono.error(new BusinessException(ExceptionEnum.SYS_DATA_UN_EXIST_ERROR)))
+                .flatMap(existingDeveloper -> {
+                    // 更新开发者信息
+                    existingDeveloper.setStatus(developerUpdateDTO.getStatus());
+                    existingDeveloper.setDeveloperType(developerUpdateDTO.getDeveloperType());
+                    existingDeveloper.setAuthenticateStatus(developerUpdateDTO.getAuthenticateStatus());
+
+                    // 如果提供了密码，则更新密码（加密后存储）
+                    if (StringUtils.isNotBlank(developerUpdateDTO.getPassword())) {
+                        String encryptedPassword = passwordUtil.encryptPassword(developerUpdateDTO.getPassword());
+                        existingDeveloper.setPassword(encryptedPassword);
+                    }
+
+                    existingDeveloper.setUpdateBy(DefaultConstant.DEFAULT_UPDATE_BY);
+                    existingDeveloper.setUpdateTime(LocalDateTime.now());
+
+                    return developerRepository.save(existingDeveloper);
+                });
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public Mono<Void> deleteById(DeveloperDeleteDTO developerDeleteDTO) {
+        return developerRepository.findById(developerDeleteDTO.getDeveloperId())
+                // 只能删除未删除的开发者
+                .filter(developer -> developer.getIsDel() == 0)
+                .switchIfEmpty(Mono.error(new BusinessException(ExceptionEnum.SYS_DATA_UN_EXIST_ERROR)))
+                .flatMap(developer -> {
+                    // 软删除
+                    developer.setIsDel(1);
+                    developer.setUpdateBy(DefaultConstant.DEFAULT_UPDATE_BY);
+                    developer.setUpdateTime(LocalDateTime.now());
+                    return developerRepository.save(developer);
+                })
+                .then();
+    }
+
+    public Mono<DeveloperDTO> getById(Long developerId) {
+        return developerRepository.findById(developerId)
+                .filter(developer -> developer.getIsDel() == 0)
+                .map(developer -> {
+                    DeveloperDTO developerDTO = new DeveloperDTO();
+                    BeanUtils.copyProperties(developer, developerDTO);
+                    return developerDTO;
+                })
+                .switchIfEmpty(Mono.error(new BusinessException(ExceptionEnum.SYS_DATA_UN_EXIST_ERROR)));
+    }
+
+    public Mono<Page<DeveloperDTO>> page(DeveloperQueryDTO developerQueryDTO, Pageable pageable) {
+        Criteria criteria = Criteria.where(DefaultConstant.IS_DEL).is(0);
+
+        if (developerQueryDTO.getStatus() != null) {
+            criteria = criteria.and(DeveloperConstant.STATUS).is(developerQueryDTO.getStatus());
+        }
+        if (StringUtils.isNotBlank(developerQueryDTO.getUsername())) {
+            criteria = criteria.and(DeveloperConstant.USERNAME).like("%" + developerQueryDTO.getUsername() + "%");
+        }
+        if (developerQueryDTO.getDeveloperType() != null) {
+            criteria = criteria.and(DeveloperConstant.DEVELOPER_TYPE).is(developerQueryDTO.getDeveloperType());
+        }
+        if (developerQueryDTO.getAuthenticateStatus() != null) {
+            criteria = criteria.and(DeveloperConstant.AUTHENTICATE_STATUS).is(developerQueryDTO.getAuthenticateStatus());
+        }
+
+        Query query = Query.query(criteria)
+                .limit(pageable.getPageSize())
+                .offset(pageable.getOffset())
+                .sort(pageable.getSort());
+
+        return r2dbcEntityTemplate.select(Developer.class)
+                .from(DeveloperConstant.DEVELOPER)
+                .matching(query)
+                .all()
+                .map(developer -> {
+                    DeveloperDTO developerDTO = new DeveloperDTO();
+                    BeanUtils.copyProperties(developer, developerDTO);
+                    return developerDTO;
+                })
+                .collectList()
+                .zipWith(r2dbcEntityTemplate.count(query, Developer.class))
+                .map(p -> new PageImpl<>(p.getT1(), pageable, p.getT2()));
+    }
+
+}
