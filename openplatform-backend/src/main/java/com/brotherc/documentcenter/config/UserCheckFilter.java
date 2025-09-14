@@ -77,11 +77,16 @@ public class UserCheckFilter implements WebFilter {
                         }
                         return chain.filter(exchange);
                     }).doOnError(ex -> {
-                        try {
-                            SaReactorSyncHolder.setContext(exchange);
-                            StpUtil.logout();
-                        } finally {
-                            SaReactorSyncHolder.clearContext();
+                        if (ex instanceof BusinessException businessException &&
+                                (businessException.getCode().equals(ExceptionEnum.USER_LOGIN_REPEAT.getCode()) ||
+                                        businessException.getCode().equals(ExceptionEnum.USER_STATUS_ERROR.getCode()))
+                        ) {
+                            try {
+                                SaReactorSyncHolder.setContext(exchange);
+                                StpUtil.logout();
+                            } finally {
+                                SaReactorSyncHolder.clearContext();
+                            }
                         }
                     });
         });
