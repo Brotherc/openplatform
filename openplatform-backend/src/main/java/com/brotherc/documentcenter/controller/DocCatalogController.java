@@ -35,7 +35,7 @@ public class DocCatalogController {
     }
 
     @Operation(summary = "查询文档目录树【门户】")
-    @GetMapping("/getTree/portal")
+    @GetMapping("/portal/getTree")
     public Mono<ResponseDTO<List<DocCatalogNodeDTO>>> getTreePortal(@Valid @ParameterObject DocCatalogNodeQueryDTO queryDTO) {
         return docCatalogService.getTreePortalByGroupId(queryDTO.getDocCatalogGroupId(), PublishStatusEnum.PUBLISH.getCode())
                 .map(ResponseDTO::success);
@@ -90,7 +90,7 @@ public class DocCatalogController {
     }
 
     @Operation(summary = "根据文章id查询文章【门户】")
-    @GetMapping("/getDocumentById/portal")
+    @GetMapping("/portal/getDocumentById")
     public Mono<ResponseDTO<DocumentDTO>> getDocumentByIdPortal(@Valid @ParameterObject DocumentQueryDTO queryDTO) {
         return docCatalogService.getDocumentById(queryDTO).map(ResponseDTO::success).switchIfEmpty(Mono.just(ResponseDTO.success(null)));
     }
@@ -102,7 +102,7 @@ public class DocCatalogController {
     }
 
     @Operation(summary = "根据文档目录id查询api信息【门户】")
-    @GetMapping("/getApiInfoById/portal")
+    @GetMapping("/portal/getApiInfoById")
     public Mono<ResponseDTO<ApiInfoDTO>> getApiInfoByDocCatalogIdPortal(@Valid @ParameterObject DocCatalogApiQueryDTO queryDTO) {
         return docCatalogService.getApiByDocCatalogId(queryDTO).map(ResponseDTO::success);
     }

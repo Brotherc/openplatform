@@ -34,7 +34,8 @@ public class UserCheckFilter implements WebFilter {
             "/v3/api-docs/**",
             "/actuator/**",
             "/doc.html",
-            "/swagger-ui/index.html"
+            "/swagger-ui/index.html",
+            "/*/portal/**"
     };
 
     private final UserRepository userRepository;

@@ -29,7 +29,8 @@ public class SaTokenConfigure {
             "/v3/api-docs/**",
             "/actuator/**",
             "/doc.html",
-            "/swagger-ui/index.html"
+            "/swagger-ui/index.html",
+            "/*/portal/**"
     };
 
     /**
