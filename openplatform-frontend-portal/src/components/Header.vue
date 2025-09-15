@@ -21,7 +21,7 @@
         <a-menu-item v-else :key="item.key">{{ item.title }}</a-menu-item>
       </template>
     </a-menu>
-    <a-button type="default" class="register-btn">注册</a-button>
+    <a-button type="default" class="register-btn" @click="goToRegister">注册</a-button>
     <a-button type="primary" class="login-btn" @click="showLoginModal">登录</a-button>
   </a-layout-header>
 
@@ -229,6 +229,11 @@ function onMenuClick({ key }: { key: string }) {
     router.push(path);
   }
 }
+
+// 跳转到注册页面
+const goToRegister = () => {
+  router.push('/register');
+};
 </script>
 
 <style scoped>

@@ -1,6 +1,7 @@
 import { RouteRecordRaw } from 'vue-router';
 import Home from './pages/Home.vue';
 import Article from './pages/Article.vue';
+import Register from './pages/Register.vue';
 
 const routes: RouteRecordRaw[] = [
   {
@@ -12,6 +13,11 @@ const routes: RouteRecordRaw[] = [
     path: '/article',
     name: 'Article',
     component: Article,
+  },
+  {
+    path: '/register',
+    name: 'Register',
+    component: Register,
   }
 ];
 
