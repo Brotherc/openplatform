@@ -178,7 +178,7 @@ const onRegisterFinishFailed = (errorInfo: any) => {
 
 // 跳转到登录
 const goToLogin = () => {
-  router.push('/');
+  router.push('/login');
 };
 </script>
 
