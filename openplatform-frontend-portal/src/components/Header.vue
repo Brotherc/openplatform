@@ -22,160 +22,27 @@
       </template>
     </a-menu>
     <a-button type="default" class="register-btn" @click="goToRegister">注册</a-button>
-    <a-button type="primary" class="login-btn" @click="showLoginModal">登录</a-button>
+    <a-button type="primary" class="login-btn" @click="goToLogin">登录</a-button>
   </a-layout-header>
-
-  <!-- 登录弹窗 -->
-  <a-modal
-    v-model:open="loginModalVisible"
-    title="用户登录"
-    :footer="null"
-    width="400px"
-    centered
-  >
-    <a-form
-      :model="loginForm"
-      name="login"
-      @finish="onLoginFinish"
-      @finishFailed="onLoginFinishFailed"
-      autocomplete="off"
-      class="login-form"
-    >
-      <a-form-item
-        name="username"
-        :rules="[{ required: true, message: '请输入用户名' }]"
-      >
-        <a-input
-          v-model:value="loginForm.username"
-          placeholder="用户名"
-          size="large"
-        >
-          <template #prefix>
-            <UserOutlined class="site-form-item-icon" />
-          </template>
-        </a-input>
-      </a-form-item>
-
-      <a-form-item
-        name="password"
-        :rules="[{ required: true, message: '请输入密码' }]"
-      >
-        <a-input-password
-          v-model:value="loginForm.password"
-          placeholder="密码"
-          size="large"
-        >
-          <template #prefix>
-            <LockOutlined class="site-form-item-icon" />
-          </template>
-        </a-input-password>
-      </a-form-item>
-
-      <a-form-item>
-        <a-form-item name="remember" no-style>
-          <a-checkbox v-model:checked="loginForm.remember">记住密码</a-checkbox>
-        </a-form-item>
-        <a class="login-form-forgot" href="">忘记密码</a>
-      </a-form-item>
-
-      <a-form-item>
-        <a-button
-          :loading="loginLoading"
-          type="primary"
-          html-type="submit"
-          class="login-form-button"
-          size="large"
-        >
-          登录
-        </a-button>
-      </a-form-item>
-    </a-form>
-  </a-modal>
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, onMounted, reactive } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { UserOutlined, LockOutlined } from '@ant-design/icons-vue';
-import { message } from 'ant-design-vue';
 import axios from 'axios';
 
 const router = useRouter();
 const route = useRoute();
 const menuList = ref<any[]>([]);
 
-// 登录弹窗相关
-const loginModalVisible = ref(false);
-const loginLoading = ref(false);
-const loginForm = reactive({
-  username: '',
-  password: '',
-  remember: true
-});
-
-interface LoginResponse {
-  success: boolean;
-  code: number;
-  message: string | null;
-  data: {
-    userId: number;
-    username: string;
-    status: number;
-    nickname: string | null;
-    createBy: number;
-    createTime: number;
-    updateBy: number;
-    updateTime: number;
-    token: string;
-  };
-}
-
-// 显示登录弹窗
-const showLoginModal = () => {
-  loginModalVisible.value = true;
+// 跳转到登录页面
+const goToLogin = () => {
+  router.push('/login');
 };
 
-// 登录提交
-const onLoginFinish = async (values: any) => {
-  loginLoading.value = true;
-  try {
-    const response = await axios.post<LoginResponse>(`${import.meta.env.VITE_API_BASE_URL}/user/login`, {
-      username: values.username,
-      password: values.password
-    });
-
-    if (response.data && response.data.code === 0 && response.data.success) {
-      message.success('登录成功');
-      
-      // 保存用户信息到localStorage
-      localStorage.setItem('userInfo', JSON.stringify(response.data.data));
-      localStorage.setItem('access_token', response.data.data.token);
-      
-      // 关闭弹窗
-      loginModalVisible.value = false;
-      
-      // 重置表单
-      Object.assign(loginForm, {
-        username: '',
-        password: '',
-        remember: true
-      });
-      
-      // 可以在这里刷新页面或更新用户状态
-      window.location.reload();
-    } else {
-      message.error(response.data.message || '登录失败，用户名或密码错误');
-    }
-  } catch (error: any) {
-    console.error('登录失败:', error);
-    message.error('登录失败，请稍后重试');
-  } finally {
-    loginLoading.value = false;
-  }
-};
-
-const onLoginFinishFailed = (errorInfo: any) => {
-  console.log('Failed:', errorInfo);
+// 跳转到注册页面
+const goToRegister = () => {
+  router.push('/register');
 };
 
 const fetchMenu = async () => {
@@ -229,11 +96,6 @@ function onMenuClick({ key }: { key: string }) {
     router.push(path);
   }
 }
-
-// 跳转到注册页面
-const goToRegister = () => {
-  router.push('/register');
-};
 </script>
 
 <style scoped>
