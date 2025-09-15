@@ -111,7 +111,7 @@ interface LoginResponse {
 const onLoginFinish = async (values: any) => {
   loginLoading.value = true;
   try {
-    const response = await axios.post<LoginResponse>(`${import.meta.env.VITE_API_BASE_URL}/user/login`, {
+    const response = await axios.post<LoginResponse>(`${import.meta.env.VITE_API_BASE_URL}/user/portal/login`, {
       username: values.username,
       password: values.password
     });
