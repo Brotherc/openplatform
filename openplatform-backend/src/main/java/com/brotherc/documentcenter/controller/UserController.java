@@ -2,6 +2,7 @@ package com.brotherc.documentcenter.controller;
 
 import com.brotherc.documentcenter.model.dto.common.ResponseDTO;
 import com.brotherc.documentcenter.model.dto.user.*;
+import com.brotherc.documentcenter.service.DeveloperService;
 import com.brotherc.documentcenter.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -22,6 +23,9 @@ public class UserController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private DeveloperService developerService;
 
     @Operation(summary = "创建用户")
     @PostMapping("/add")
@@ -57,6 +61,12 @@ public class UserController {
     @PostMapping("/login")
     public Mono<ResponseDTO<UserTokenDTO>> login(@Valid @RequestBody UserLoginDTO userLoginDTO) {
         return userService.login(userLoginDTO).map(ResponseDTO::success);
+    }
+
+    @Operation(summary = "用户登录【门户】")
+    @PostMapping("/portal/login")
+    public Mono<ResponseDTO<UserPortalTokenDTO>> portalLogin(@Valid @RequestBody UserLoginPortalDTO userLoginPortalDTO) {
+        return developerService.portalLogin(userLoginPortalDTO).map(ResponseDTO::success);
     }
 
     @Operation(summary = "用户登出")

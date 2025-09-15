@@ -1,11 +1,17 @@
 package com.brotherc.documentcenter.service;
 
+import cn.dev33.satoken.reactor.context.SaReactorHolder;
+import cn.dev33.satoken.stp.SaTokenInfo;
+import cn.dev33.satoken.stp.StpUtil;
 import com.brotherc.documentcenter.constants.DefaultConstant;
 import com.brotherc.documentcenter.constants.DeveloperConstant;
 import com.brotherc.documentcenter.dao.DeveloperRepository;
+import com.brotherc.documentcenter.enums.UserStatusEnum;
 import com.brotherc.documentcenter.exception.BusinessException;
 import com.brotherc.documentcenter.exception.ExceptionEnum;
 import com.brotherc.documentcenter.model.dto.developer.*;
+import com.brotherc.documentcenter.model.dto.user.UserLoginPortalDTO;
+import com.brotherc.documentcenter.model.dto.user.UserPortalTokenDTO;
 import com.brotherc.documentcenter.model.entity.Developer;
 import com.brotherc.documentcenter.util.PasswordUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -145,6 +151,33 @@ public class DeveloperService {
                 .collectList()
                 .zipWith(r2dbcEntityTemplate.count(query, Developer.class))
                 .map(p -> new PageImpl<>(p.getT1(), pageable, p.getT2()));
+    }
+
+
+    public Mono<UserPortalTokenDTO> portalLogin(UserLoginPortalDTO userLoginPortalDTO) {
+        return developerRepository.findByUsernameAndIsDel(userLoginPortalDTO.getUsername(), 0)
+                .switchIfEmpty(Mono.error(new BusinessException(ExceptionEnum.LOGIN_USERNAME_PASSWORD_ERROR)))
+                .flatMap(developer -> {
+                    // 验证密码
+                    if (!passwordUtil.verifyPassword(userLoginPortalDTO.getPassword(), developer.getPassword())) {
+                        return Mono.error(new BusinessException(ExceptionEnum.LOGIN_USERNAME_PASSWORD_ERROR));
+                    }
+                    // 判断状态
+                    if (developer.getStatus() == UserStatusEnum.DISABLED.getCode()) {
+                        return Mono.error(new BusinessException(ExceptionEnum.USER_DISABLED));
+                    }
+
+                    UserPortalTokenDTO userDTO = new UserPortalTokenDTO();
+                    BeanUtils.copyProperties(developer, userDTO);
+
+                    return SaReactorHolder.sync(() -> {
+                        // todo 改一下前缀
+                        StpUtil.login(userDTO.getDeveloperId());
+                        SaTokenInfo tokenInfo = StpUtil.getTokenInfo();
+                        userDTO.setToken(tokenInfo.getTokenValue());
+                        return userDTO;
+                    });
+                });
     }
 
 }
