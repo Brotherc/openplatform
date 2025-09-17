@@ -5,6 +5,7 @@ import cn.dev33.satoken.stp.SaTokenInfo;
 import cn.dev33.satoken.stp.StpUtil;
 import com.brotherc.documentcenter.constants.DefaultConstant;
 import com.brotherc.documentcenter.constants.DeveloperConstant;
+import com.brotherc.documentcenter.constants.LoginConstants;
 import com.brotherc.documentcenter.dao.DeveloperRepository;
 import com.brotherc.documentcenter.enums.UserStatusEnum;
 import com.brotherc.documentcenter.exception.BusinessException;
@@ -171,8 +172,7 @@ public class DeveloperService {
                     BeanUtils.copyProperties(developer, userDTO);
 
                     return SaReactorHolder.sync(() -> {
-                        // todo 改一下前缀
-                        StpUtil.login(userDTO.getDeveloperId());
+                        StpUtil.login(LoginConstants.DEVELOPER_PREFIX + userDTO.getDeveloperId());
                         SaTokenInfo tokenInfo = StpUtil.getTokenInfo();
                         userDTO.setToken(tokenInfo.getTokenValue());
                         return userDTO;

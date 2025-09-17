@@ -47,6 +47,7 @@ public class SaTokenConfigure {
                 .setAuth(obj -> SaRouter
                         .match("/**")
                         .notMatch("/user/login")
+                        .notMatch("/user/portal/login")
                         .notMatch(SaHttpMethod.OPTIONS)
                         .check(r -> StpUtil.checkLogin()))
                 .setError(e -> {
