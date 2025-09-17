@@ -18,12 +18,13 @@
           name="username"
           :rules="[
             { required: true, message: '请输入用户名' },
-            { min: 3, max: 20, message: '用户名长度为3-20个字符' }
+            { min: 3, max: 50, message: '用户名长度为3-50个字符' },
+            { pattern: /^[a-zA-Z0-9_]+$/, message: '用户名只能包含字母、数字和下划线' }
           ]"
         >
           <a-input
             v-model:value="registerForm.username"
-            placeholder="用户名"
+            placeholder="用户名（3-50个字符，只能包含字母、数字和下划线）"
             size="large"
           >
             <template #prefix>
@@ -36,12 +37,13 @@
           name="password"
           :rules="[
             { required: true, message: '请输入密码' },
-            { min: 6, message: '密码至少6位' }
+            { min: 6, max: 20, message: '密码长度必须在6-20个字符之间' },
+            { pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{6,20}$/, message: '密码必须包含至少一个小写字母、一个大写字母和一个数字，可包含特殊字符@$!%*?&' }
           ]"
         >
           <a-input-password
             v-model:value="registerForm.password"
-            placeholder="密码"
+            placeholder="密码（6-20个字符，必须包含大小写字母和数字）"
             size="large"
           >
             <template #prefix>
