@@ -6,6 +6,7 @@ import ArticleManage from '../view/doc/article/index.vue'
 import ApiManage from '../view/api/manage/index.vue'
 import MenuManage from '../view/portal/menu/index.vue'
 import UserManage from '../view/basic/user/index.vue'
+import DeveloperManage from '../view/developer/index.vue'
 
 const routes = [{
     path: '/',
@@ -40,6 +41,11 @@ const routes = [{
             path: 'user-manage',
             name: 'UserManage',
             component: UserManage
+        },
+        {
+            path: 'developer-manage',
+            name: 'DeveloperManage',
+            component: DeveloperManage
         }
     ]
 },{

@@ -61,6 +61,18 @@
             <span>用户管理</span>
           </a-menu-item>
         </a-sub-menu>
+        <a-sub-menu key="developer-center">
+          <template #title>
+            <span>
+              <team-outlined />
+              <span>开发者中心</span>
+            </span>
+          </template>
+          <a-menu-item key="developer-manage">
+            <user-outlined />
+            <span>开发者管理</span>
+          </a-menu-item>
+        </a-sub-menu>
       </a-menu>
     </a-layout-sider>
     <a-layout>
@@ -108,17 +120,15 @@ import { ref, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   BookOutlined,
-  FolderOutlined,
-  FolderOpenOutlined,
   FileTextOutlined,
-  MenuUnfoldOutlined,
-  MenuFoldOutlined,
+  FolderOutlined,
   ApiOutlined,
   CodeOutlined,
-  AppstoreOutlined,
   MenuOutlined,
-  SettingOutlined,
   UserOutlined,
+  TeamOutlined,
+  MenuUnfoldOutlined,
+  MenuFoldOutlined,
   DownOutlined,
   LogoutOutlined
 } from '@ant-design/icons-vue'
@@ -196,8 +206,31 @@ onMounted(() => {
   getUserInfo()
 })
 
-const handleMenuClick: MenuClickEventHandler = ({ key }) => {
-  router.push(`/home/${key}`)
+const handleMenuClick = ({ key }: { key: string }) => {
+  selectedKeys.value = [key]
+  
+  switch (key) {
+    case 'group':
+      router.push('/home/group')
+      break
+    case 'article':
+      router.push('/home/article')
+      break
+    case 'api-manage':
+      router.push('/home/api-manage')
+      break
+    case 'menu-manage':
+      router.push('/home/menu-manage')
+      break
+    case 'user-manage':
+      router.push('/home/user-manage')
+      break
+    case 'developer-manage':
+      router.push('/home/developer-manage')
+      break
+    default:
+      break
+  }
 }
 </script>
 
