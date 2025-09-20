@@ -29,13 +29,13 @@ public class DeveloperController {
         return developerService.add(developerAddDTO).map(o -> ResponseDTO.success());
     }
 
-    @Operation(summary = "根据用户ID更新开发者")
+    @Operation(summary = "根据开发者ID更新开发者")
     @PostMapping("/updateById")
     public Mono<ResponseDTO<Void>> updateById(@Valid @RequestBody DeveloperUpdateDTO developerUpdateDTO) {
         return developerService.updateById(developerUpdateDTO).map(o -> ResponseDTO.success());
     }
 
-    @Operation(summary = "根据用户ID删除开发者")
+    @Operation(summary = "根据开发者ID删除开发者")
     @PostMapping("/deleteById")
     public Mono<ResponseDTO<Void>> deleteById(@Valid @RequestBody DeveloperDeleteDTO developerDeleteDTO) {
         return developerService.deleteById(developerDeleteDTO).then(Mono.fromCallable(ResponseDTO::success));
