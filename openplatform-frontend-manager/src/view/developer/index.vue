@@ -24,8 +24,32 @@
                 allow-clear
                 style="width: 120px"
               >
-                <a-select-option :value="1">正常</a-select-option>
-                <a-select-option :value="2">禁用</a-select-option>
+                <a-select-option :value="2">启用</a-select-option>
+                <a-select-option :value="1">禁用</a-select-option>
+              </a-select>
+            </a-form-item>
+            <a-form-item label="开发者类型">
+              <a-select
+                v-model:value="searchForm.developerType"
+                placeholder="请选择开发者类型"
+                allow-clear
+                style="width: 140px"
+              >
+                <a-select-option :value="1">个人</a-select-option>
+                <a-select-option :value="2">企业</a-select-option>
+              </a-select>
+            </a-form-item>
+            <a-form-item label="认证状态">
+              <a-select
+                v-model:value="searchForm.authenticateStatus"
+                placeholder="请选择认证状态"
+                allow-clear
+                style="width: 140px"
+              >
+                <a-select-option :value="1">已认证</a-select-option>
+                <a-select-option :value="2">未认证</a-select-option>
+                <a-select-option :value="3">审核中</a-select-option>
+                <a-select-option :value="4">认证未通过</a-select-option>
               </a-select>
             </a-form-item>
             <a-form-item>
@@ -52,12 +76,20 @@
         :loading="loading"
         :pagination="pagination"
         @change="handleTableChange"
-        row-key="id"
+        row-key="developerId"
       >
         <template #bodyCell="{ column, record }">
+          <template v-if="column.key === 'developerType'">
+            {{ record.developerType === 1 ? '个人' : '企业' }}
+          </template>
+          <template v-if="column.key === 'authenticateStatus'">
+            <a-tag :color="getAuthenticateStatusColor(record.authenticateStatus)">
+              {{ getAuthenticateStatusText(record.authenticateStatus) }}
+            </a-tag>
+          </template>
           <template v-if="column.key === 'status'">
-            <a-tag :color="record.status === 1 ? 'green' : 'red'">
-              {{ record.status === 1 ? '正常' : '禁用' }}
+            <a-tag :color="record.status === 2 ? 'green' : 'red'">
+              {{ record.status === 2 ? '启用' : '禁用' }}
             </a-tag>
           </template>
           <template v-if="column.key === 'createTime'">
@@ -107,13 +139,22 @@
             placeholder="请输入密码"
           />
         </a-form-item>
+        <a-form-item label="开发者类型" name="developerType">
+          <a-select
+            v-model:value="formData.developerType"
+            placeholder="请选择开发者类型"
+          >
+            <a-select-option :value="1">个人</a-select-option>
+            <a-select-option :value="2">企业</a-select-option>
+          </a-select>
+        </a-form-item>
         <a-form-item label="状态" name="status">
           <a-select
             v-model:value="formData.status"
             placeholder="请选择状态"
           >
-            <a-select-option :value="1">正常</a-select-option>
-            <a-select-option :value="2">禁用</a-select-option>
+            <a-select-option :value="2">启用</a-select-option>
+            <a-select-option :value="1">禁用</a-select-option>
           </a-select>
         </a-form-item>
       </a-form>
@@ -133,10 +174,11 @@ import axios from 'axios'
 
 // 开发者数据接口
 interface Developer {
-  id: string
+  developerId: string
   username: string
-  nickname: string
   status: number
+  developerType: number
+  authenticateStatus?: number
   createTime?: string
   updateTime?: string
 }
@@ -145,14 +187,17 @@ interface Developer {
 interface SearchForm {
   username?: string
   status?: number
+  developerType?: number
+  authenticateStatus?: number
 }
 
 // 表单数据接口
 interface FormData {
-  id?: string
+  developerId?: string
   username: string
   password: string
   status: number
+  developerType: number
 }
 
 // 响应数据
@@ -166,14 +211,17 @@ const formRef = ref()
 // 搜索表单
 const searchForm = reactive<SearchForm>({
   username: '',
-  status: undefined
+  status: undefined,
+  developerType: undefined,
+  authenticateStatus: undefined
 })
 
 // 表单数据
 const formData = reactive<FormData>({
   username: '',
   password: '',
-  status: 1
+  status: 2,
+  developerType: 1
 })
 
 // 分页配置
@@ -183,7 +231,14 @@ const pagination = reactive({
   total: 0,
   showSizeChanger: true,
   showQuickJumper: true,
-  showTotal: (total: number) => `共 ${total} 条记录`
+  showTotal: (total: number) => `共 ${total} 条记录`,
+  pageSizeOptions: ['10', '20', '50', '100'],
+  locale: {
+    items_per_page: '条/页',
+    jump_to: '跳至',
+    jump_to_confirm: '确定',
+    page: '页'
+  }
 })
 
 // 表格列配置
@@ -191,7 +246,20 @@ const columns = [
   {
     title: '用户名',
     dataIndex: 'username',
-    key: 'username'
+    key: 'username',
+    width: 150
+  },
+  {
+    title: '开发者类型',
+    dataIndex: 'developerType',
+    key: 'developerType',
+    width: 120
+  },
+  {
+    title: '认证状态',
+    dataIndex: 'authenticateStatus',
+    key: 'authenticateStatus',
+    width: 120
   },
   {
     title: '状态',
@@ -222,8 +290,11 @@ const rules = computed(() => ({
   password: modalType.value === 'create' ? [
     { required: true, message: '请输入密码' },
     { min: 6, max: 20, message: '密码长度必须在6-20个字符之间' },
-    { pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{6,20}$/, message: '密码必须包含至少一个小写字母、一个大写字母和一个数字' }
+    { pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{6,20}$/, message: '密码必须包含至少一个小写字母、一个大写字母和一个数字，可包含特殊字符@$!%*?&' }
   ] : [],
+  developerType: [
+    { required: true, message: '请选择开发者类型' }
+  ],
   status: [
     { required: true, message: '请选择状态' }
   ]
@@ -232,7 +303,49 @@ const rules = computed(() => ({
 // 格式化时间
 const formatDate = (timestamp: number) => {
   if (!timestamp) return '-'
-  return new Date(timestamp).toLocaleString()
+  const date = new Date(timestamp)
+  if (isNaN(date.getTime())) return '-'
+  
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+  const seconds = String(date.getSeconds()).padStart(2, '0')
+  
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
+}
+
+// 获取认证状态文本
+const getAuthenticateStatusText = (status: number) => {
+  switch (status) {
+    case 1:
+      return '已认证'
+    case 2:
+      return '未认证'
+    case 3:
+      return '审核中'
+    case 4:
+      return '认证未通过'
+    default:
+      return '未知'
+  }
+}
+
+// 获取认证状态颜色
+const getAuthenticateStatusColor = (status: number) => {
+  switch (status) {
+    case 1:
+      return 'green'
+    case 2:
+      return 'default'
+    case 3:
+      return 'orange'
+    case 4:
+      return 'red'
+    default:
+      return 'default'
+  }
 }
 
 // 获取开发者列表
@@ -240,16 +353,16 @@ const fetchDeveloperList = async () => {
   loading.value = true
   try {
     const params = {
-      pageNum: pagination.current,
-      pageSize: pagination.pageSize,
+      page: pagination.current - 1, // 后端从0开始
+      size: pagination.pageSize,
       ...searchForm
     }
     
     const response = await axios.get('/developer/page', { params })
     
     if (response.data && response.data.code === 0) {
-      tableData.value = response.data.data.records || []
-      pagination.total = response.data.data.total || 0
+      tableData.value = response.data.data.content || []
+      pagination.total = response.data.data.totalElements || 0
     } else {
       message.error(response.data.message || '获取数据失败')
     }
@@ -271,7 +384,9 @@ const handleSearch = () => {
 const handleReset = () => {
   Object.assign(searchForm, {
     username: '',
-    status: undefined
+    status: undefined,
+    developerType: undefined,
+    authenticateStatus: undefined
   })
   pagination.current = 1
   fetchDeveloperList()
@@ -291,7 +406,8 @@ const handleAdd = () => {
   Object.assign(formData, {
     username: '',
     password: '',
-    status: 1
+    status: 2,
+    developerType: 1
   })
   formRef.value?.resetFields()
 }
@@ -300,13 +416,27 @@ const handleAdd = () => {
 const handleEdit = (record: Developer) => {
   modalType.value = 'edit'
   modalVisible.value = true
+  
+  // 先重置表单数据
   Object.assign(formData, {
-    id: record.id,
+    developerId: '',
+    username: '',
+    password: '',
+    status: 2,
+    developerType: 1
+  })
+  
+  // 再设置当前记录的数据
+  Object.assign(formData, {
+    developerId: record.developerId,
     username: record.username,
     password: '',
-    status: record.status
+    status: record.status,
+    developerType: record.developerType || 1
   })
-  formRef.value?.resetFields()
+  
+  // 清空表单验证
+  formRef.value?.clearValidate()
 }
 
 // 提交表单
@@ -320,15 +450,11 @@ const handleSubmit = async () => {
       const requestData: any = {
         username: formData.username,
         password: formData.password,
-        status: formData.status
+        status: formData.status,
+        developerType: formData.developerType
       }
 
-      // 只有当昵称有值时才传递
-      if (formData.nickname && formData.nickname.trim()) {
-        requestData.nickname = formData.nickname.trim()
-      }
-
-      const response = await axios.post('/developer', requestData)
+      const response = await axios.post('/developer/add', requestData)
 
       if (response.data && response.data.code === 0) {
         message.success('创建开发者成功')
@@ -339,17 +465,13 @@ const handleSubmit = async () => {
       }
     } else {
       // 编辑开发者
-      const requestData: any = {
-        id: formData.id,
-        status: formData.status
+      const requestData = {
+        developerId: formData.developerId,
+        status: formData.status,
+        developerType: formData.developerType
       }
 
-      // 只有当昵称有值时才传递
-      if (formData.nickname && formData.nickname.trim()) {
-        requestData.nickname = formData.nickname.trim()
-      }
-
-      const response = await axios.put(`/developer/${formData.id}`, requestData)
+      const response = await axios.post('/developer/updateById', requestData)
 
       if (response.data && response.data.code === 0) {
         message.success('更新开发者成功')
@@ -372,6 +494,14 @@ const handleSubmit = async () => {
 // 取消弹窗
 const handleCancel = () => {
   modalVisible.value = false
+  // 重置表单数据
+  Object.assign(formData, {
+    developerId: '',
+    username: '',
+    password: '',
+    status: 2,
+    developerType: 1
+  })
   formRef.value?.resetFields()
 }
 
@@ -384,7 +514,13 @@ const handleDelete = (record: Developer) => {
     cancelText: '取消',
     onOk: async () => {
       try {
-        const response = await axios.delete(`/developer/${record.id}`)
+        const requestData = {
+          developerId: record.developerId
+        }
+        
+        console.log('删除请求参数:', requestData) // 调试日志
+        
+        const response = await axios.post('/developer/deleteById', requestData)
 
         if (response.data && response.data.code === 0) {
           message.success('删除开发者成功')
