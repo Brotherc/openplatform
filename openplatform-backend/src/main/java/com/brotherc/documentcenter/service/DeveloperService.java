@@ -183,4 +183,27 @@ public class DeveloperService {
                 });
     }
 
+    /**
+     * 管理员修改开发者密码
+     *
+     * @param developerChangePasswordDTO 修改密码DTO
+     * @return 修改结果
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public Mono<Void> changePassword(DeveloperChangePasswordDTO developerChangePasswordDTO) {
+        return developerRepository.findById(developerChangePasswordDTO.getDeveloperId())
+                .filter(developer -> developer.getIsDel() == 0)
+                .switchIfEmpty(Mono.error(new BusinessException(ExceptionEnum.SYS_DATA_UN_EXIST_ERROR)))
+                .flatMap(developer -> {
+                    // 加密新密码并保存
+                    String encryptedNewPassword = passwordUtil.encryptPassword(developerChangePasswordDTO.getNewPassword());
+                    developer.setPassword(encryptedNewPassword);
+                    developer.setUpdateBy(DefaultConstant.DEFAULT_UPDATE_BY);
+                    developer.setUpdateTime(LocalDateTime.now());
+
+                    return developerRepository.save(developer);
+                })
+                .then();
+    }
+
 }

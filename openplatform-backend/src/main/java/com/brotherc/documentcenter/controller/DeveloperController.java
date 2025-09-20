@@ -53,4 +53,10 @@ public class DeveloperController {
         return developerService.page(developerQueryDTO, pageable).map(ResponseDTO::success);
     }
 
+    @Operation(summary = "修改开发者密码")
+    @PostMapping("/changePassword")
+    public Mono<ResponseDTO<Void>> changePassword(@Valid @RequestBody DeveloperChangePasswordDTO developerChangePasswordDTO) {
+        return developerService.changePassword(developerChangePasswordDTO).then(Mono.fromCallable(ResponseDTO::success));
+    }
+
 }
