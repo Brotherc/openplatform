@@ -325,6 +325,17 @@ const showAddModal = () => {
 const showEditModal = (record: User) => {
   modalType.value = 'edit'
   modalVisible.value = true
+  
+  // 先重置表单数据
+  Object.assign(formData, {
+    userId: '',
+    username: '',
+    password: '',
+    nickname: '',
+    status: 2
+  })
+  
+  // 再设置当前记录的数据
   Object.assign(formData, {
     userId: record.userId,
     username: record.username,
@@ -332,7 +343,8 @@ const showEditModal = (record: User) => {
     nickname: record.nickname,
     status: record.status
   })
-  formRef.value?.resetFields()
+  
+  formRef.value?.clearValidate()
 }
 
 // 提交表单
@@ -404,6 +416,14 @@ const handleSubmit = async () => {
 // 取消操作
 const handleCancel = () => {
   modalVisible.value = false
+  // 重置表单数据
+  Object.assign(formData, {
+    userId: '',
+    username: '',
+    password: '',
+    nickname: '',
+    status: 2
+  })
   formRef.value?.resetFields()
 }
 
