@@ -7,6 +7,7 @@ import com.brotherc.documentcenter.constants.DefaultConstant;
 import com.brotherc.documentcenter.constants.DeveloperConstant;
 import com.brotherc.documentcenter.constants.LoginConstants;
 import com.brotherc.documentcenter.dao.DeveloperRepository;
+import com.brotherc.documentcenter.enums.DeveloperAuthenticateStatusEnum;
 import com.brotherc.documentcenter.enums.UserStatusEnum;
 import com.brotherc.documentcenter.exception.BusinessException;
 import com.brotherc.documentcenter.exception.ExceptionEnum;
@@ -57,6 +58,9 @@ public class DeveloperService {
                     // 加密密码
                     String encryptedPassword = passwordUtil.encryptPassword(developer.getPassword());
                     developer.setPassword(encryptedPassword);
+
+                    // 设置认证状态，默认为未认证
+                    developer.setAuthenticateStatus(DeveloperAuthenticateStatusEnum.UNAUTHORIZED.getCode());
 
                     developer.setCreateBy(DefaultConstant.DEFAULT_CREATE_BY);
                     developer.setUpdateBy(DefaultConstant.DEFAULT_UPDATE_BY);

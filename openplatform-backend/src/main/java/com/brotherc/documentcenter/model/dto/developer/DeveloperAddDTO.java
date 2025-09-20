@@ -32,8 +32,4 @@ public class DeveloperAddDTO {
     @Schema(description = "开发者类型，1：个人，2：企业", requiredMode = Schema.RequiredMode.REQUIRED)
     private Integer developerType;
 
-    @NotNull(message = "认证状态不能为空")
-    @Schema(description = "认证状态，1：已认证，2：未认证，3：审核中，4：认证未通过", requiredMode = Schema.RequiredMode.REQUIRED)
-    private Integer authenticateStatus;
-
 }
