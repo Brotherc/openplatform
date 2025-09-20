@@ -81,12 +81,11 @@ public class DeveloperService {
                     // 更新开发者信息
                     existingDeveloper.setStatus(developerUpdateDTO.getStatus());
                     existingDeveloper.setDeveloperType(developerUpdateDTO.getDeveloperType());
-                    existingDeveloper.setAuthenticateStatus(developerUpdateDTO.getAuthenticateStatus());
 
-                    // 如果提供了密码，则更新密码（加密后存储）
-                    if (StringUtils.isNotBlank(developerUpdateDTO.getPassword())) {
-                        String encryptedPassword = passwordUtil.encryptPassword(developerUpdateDTO.getPassword());
-                        existingDeveloper.setPassword(encryptedPassword);
+                    // 如果改了开发者类型，则将认证状态置为未认证，并且将开发者资质失效
+                    if (developerUpdateDTO.getDeveloperType().equals(existingDeveloper.getDeveloperType())) {
+                        existingDeveloper.setAuthenticateStatus(DeveloperAuthenticateStatusEnum.UNAUTHORIZED.getCode());
+                        // todo
                     }
 
                     existingDeveloper.setUpdateBy(DefaultConstant.DEFAULT_UPDATE_BY);
